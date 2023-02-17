@@ -1,0 +1,30 @@
+Package: ProteoMatch
+Title: ProteoMatch - A proteoform isotope matching tool
+Version: 0.1.0
+Authors@R: 
+    person("David", "Degnan", email = "david.degnan@pnnl.gov", role = c("aut", "cre"))
+Description: Matches calculated proteoform fragmentation patterns to MS1 spectra and visualizes results with trelliscopejs 
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports: 
+    magrittr,
+    data.table,
+    stringr,
+    BRAIN,
+    tidyr,
+    dplyr,
+    Rdisop,
+    lsa,
+    uuid,
+    ggplot2,
+    xlsx
+Remotes:
+    EMSL-Computing/pspecterlib,
+    hafen/trelliscopejs
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
