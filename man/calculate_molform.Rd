@@ -21,7 +21,7 @@ with pull_modifications_from_mzid, or made with create_proforma for MSPathFinder
 ProSight, and pTop modifications. TopPIC proteoforms are provided as ProForma
 strings. Required.}
 
-\item{BioType}{A string indicating whether the Modifications are "ProForma" strings or "Molecular Formula". Required.}
+\item{BioType}{A string indicating whether the Biomolecules are "ProForma" strings or "Molecular Formula". Required.}
 
 \item{Identifiers}{A vector of identifiers for each biomolecule (i.e. protein, glycan, etc.). Optional.}
 

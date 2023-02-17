@@ -36,7 +36,7 @@ to be matched. Default is 0.1, which is 0.1\%.}
 \item{IsotopeRange}{The minimum and maximum number of isotopes to consider. Default is c(3,20).}
 }
 \value{
-A ProteoMatch_MatchedPeaks object, which is a data.table containing the
+A IsoMatchMS_MatchedPeaks object, which is a data.table containing the
 Identifier, Adduct, M/Z, Intensity, Isotope, M/Z Search Window, Experimental M/Z,
 Experimental Intensity, PPM Error, Absolute Relative Error, Correlation,
 Charge, Biomolecule, and an ID.

@@ -7,7 +7,7 @@
 #'    with pull_modifications_from_mzid, or made with create_proforma for MSPathFinder,
 #'    ProSight, and pTop modifications. TopPIC proteoforms are provided as ProForma
 #'    strings. Required.
-#' @param BioType A string indicating whether the Modifications are "ProForma" strings or "Molecular Formula". Required. 
+#' @param BioType A string indicating whether the Biomolecules are "ProForma" strings or "Molecular Formula". Required. 
 #' @param Identifiers A vector of identifiers for each biomolecule (i.e. protein, glycan, etc.). Optional.
 #' @param Charge The range of charges to test. Default is 1.
 #' @param AddMostAbundantIsotope A flag to determine whether the Most Abundant Isotope (MAI) should be calculated for 
@@ -193,9 +193,10 @@ calculate_molform <- function(Biomolecules,
         
       
         # Generate data table
-        ProteoMatch_MolForm <- data.table::data.table(
+        IsoMatchMS_MolForm <- data.table::data.table(
           "Biomolecules" = Biomolecule,
-          "Name" = Name, 
+          "Identifiers" = Name,
+          "Adduct" = AdductMasses,
           "Charge" = Charge,
           "Molecular Formula" = MolForm, 
           "Mass Shift" = MassChanges, 
@@ -204,7 +205,7 @@ calculate_molform <- function(Biomolecules,
         )
         
         # Return object
-        return(ProteoMatch_MolForm)
+        return(IsoMatchMS_MolForm)
         
       } 
     
@@ -272,7 +273,7 @@ calculate_molform <- function(Biomolecules,
       MolForm <- paste0(names(CleanedNames), CleanedNames, collapse = "")
       
       # Generate data table
-      ProteoMatch_MolForm <- data.table::data.table(
+      IsoMatchMS_MolForm <- data.table::data.table(
         "Biomolecules" = Biomolecule,
         "Identifiers" = Name, 
         "Adduct" = AdductMasses,
@@ -284,7 +285,7 @@ calculate_molform <- function(Biomolecules,
       )
   
       # Return object
-      return(ProteoMatch_MolForm)
+      return(IsoMatchMS_MolForm)
   
     } else if (BioType == "Molecular Formula") {
       
@@ -308,8 +309,8 @@ calculate_molform <- function(Biomolecules,
         
       } else {MAI <- NA}
       
-      ProteoMatch_MolForm <- data.table::data.table(
-        "Biomolecules" = Biomolecules,
+      IsoMatchMS_MolForm <- data.table::data.table(
+        "Biomolecules" = Biomolecule,
         "Identifiers" = Name,
         "Adduct" = AdductMasses,
         "Charge" = Charge,
@@ -322,7 +323,7 @@ calculate_molform <- function(Biomolecules,
     }
     
   }
-
+  
   # Iterate through Biomoleculess and charges, and calculate all required values
   Pre_MolForms <- data.table::data.table(
     Pform = rep(Biomolecules, each = length(Charge)),
@@ -335,7 +336,7 @@ calculate_molform <- function(Biomolecules,
   doParallel::registerDoParallel(parallel::detectCores())
   
   # Collect results
-  All_MolForms <- foreach(it = 1:nrow(Pre_MolForms), .combine = rbind) %dopar% {
+  All_MolForms <- foreach(it = 1:nrow(Pre_MolForms), .combine = "rbind") %dopar% {
     .calculate_molform_iterator(
       Biomolecule = Pre_MolForms$Pform[it],
       Name = Pre_MolForms$theName[it],

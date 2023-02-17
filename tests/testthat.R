@@ -1,4 +1,4 @@
 library(testthat)
-library(ProteoMatch)
+library(IsoMatchMS)
 
-test_check("ProteoMatch")
+test_check("IsoMatchMS")

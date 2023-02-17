@@ -4,7 +4,7 @@
 \alias{plot_Ms1Match}
 \title{Plots the Biomolecule Isotope Profile on top of the experimental sequence}
 \usage{
-plot_Ms1Match(PeakData, Ms1Match, ID, Trace = TRUE, Window = 5)
+plot_Ms1Match(PeakData, Ms1Match, ID, Trace = FALSE, Window = 5)
 }
 \arguments{
 \item{PeakData}{A pspecterlib peak_data object or data.table with "M/Z" and "Intensity". Required.}
@@ -13,7 +13,7 @@ plot_Ms1Match(PeakData, Ms1Match, ID, Trace = TRUE, Window = 5)
 
 \item{ID}{The ID in the IsoMatchMS_MatchedPeaks object to plot. Required.}
 
-\item{Trace}{Plot the mass spectrum as a continuous line rather than a series of peaks. Default is TRUE.}
+\item{Trace}{Plot the mass spectrum as a continuous line rather than a series of peaks. Default is FALSE.}
 
 \item{Window}{The -/+ m/z value on either side of the matched spectra plot. Default is 5 m/z.}
 }
@@ -52,7 +52,11 @@ IsoMatch <- match_biomolecule_to_ms1(
 )
 
 # Make plot
-plot_Ms1Match(PeakData = PeakData, Ms1Match = AllMatches, ID = 1)
+plot_Ms1Match(
+  PeakData = PeakData, 
+  Ms1Match = IsoMatch, 
+  ID = 1
+)
 
 }
 

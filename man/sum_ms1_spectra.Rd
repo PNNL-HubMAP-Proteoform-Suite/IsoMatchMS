@@ -24,15 +24,15 @@ Default is TRUE.}
 }
 \value{
 A peak_data object with summed MS1 spectra. This object can be directly
-inputted into run_proteomatch.
+inputted into run_isomatchms.
 }
 \description{
 Reads an mzML file, extracts all MS1 spectra, and sums the abundances
 together at a PPM threshold
 }
 \details{
-Allows users to easily sum spectra for the main ProteoMatch pipeline function
-run_proteomatch. Values are rounded to the nearest 5 ppm. After summing, abundances
+Allows users to easily sum spectra for the main IsoMatchMS pipeline function
+run_isomatchms. Values are rounded to the nearest 5 ppm. After summing, abundances
 less than 0.01 are tossed.
 }
 \examples{

@@ -11,12 +11,12 @@
 #'    Default is TRUE.
 #'    
 #' @details
-#' Allows users to easily sum spectra for the main ProteoMatch pipeline function 
-#' run_proteomatch. Values are rounded to the nearest 5 ppm. After summing, abundances
+#' Allows users to easily sum spectra for the main IsoMatchMS pipeline function 
+#' run_isomatchms. Values are rounded to the nearest 5 ppm. After summing, abundances
 #' less than 0.01 are tossed.
 #' 
 #' @returns A peak_data object with summed MS1 spectra. This object can be directly
-#' inputted into run_proteomatch. 
+#' inputted into run_isomatchms.
 #' 
 #' @examples
 #' \dontrun{

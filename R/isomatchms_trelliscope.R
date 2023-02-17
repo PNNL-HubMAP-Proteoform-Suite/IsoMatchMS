@@ -76,7 +76,7 @@ isomatchms_trelliscope <- function(PeakData,
     stop("PeakData must be a pspecterlib peak_data object.")
   }
 
-  # Ms1Match should be a ProteoMatch_MatchedPeaks object
+  # Ms1Match should be a IsoMatchMS_MatchedPeaks object
   if ("IsoMatchMS_MatchedPeaks" %in% class(Ms1Match) == FALSE) {
     stop("Ms1Match must be a IsoMatchMS_MatchedPeaks object from match_proteoform_to_ms1")
   }
@@ -99,20 +99,21 @@ isomatchms_trelliscope <- function(PeakData,
   ## Make the trelliscope display ##
   ##################################
 
-  # Convert ProteoMatch class
-  ProteoMatchTrelli <- Ms1Match
-  class(ProteoMatchTrelli) <- c("data.table", "data.frame")
+  # Convert IsoMatchMS class
+  IsoMatchMSTrelli <- Ms1Match
+  class(IsoMatchMSTrelli) <- c("data.table", "data.frame")
+  IsoMatchMSTrelli <- IsoMatchMSTrelli %>% dplyr::rename(Identifier = Identifiers, Biomolecule = Biomolecules)
 
-  # Filter ProteoMatch down to the correlation score
-  ProteoMatchTrelli <- ProteoMatchTrelli %>%
+  # Filter IsoMatchMS down to the correlation score
+  IsoMatchMSTrelli <- IsoMatchMSTrelli %>%
     dplyr::filter(Correlation >= MinCorrelationScore)
 
-  # List relevant ProteoMatch columns
-  RelCol <- c("Identifiers", "Absolute Relative Error", "Correlation", "Molecular Formula",
-              "Monoisotopic Mass", "Figure of Merit", "Charge", "Biomolecules", "ID")
+  # List relevant IsoMatchMS columns
+  RelCol <- c("Identifier", "Absolute Relative Error", "Correlation", "Molecular Formula",
+              "Monoisotopic Mass", "Figure of Merit", "Charge", "Biomolecule", "ID")
 
   # Calculate Median PPM Error and Minimum MZ
-  MedianPPMError <- ProteoMatchTrelli %>%
+  MedianPPMError <- IsoMatchMSTrelli %>%
     dplyr::select(ID, `PPM Error`, `M/Z`) %>%
     dplyr::group_by(ID) %>%
     dplyr::summarise(
@@ -123,7 +124,7 @@ isomatchms_trelliscope <- function(PeakData,
     dplyr::ungroup()
   
   # Generate trelliscope display
-  ProteoMatchTrelli %>%
+  IsoMatchMSTrelli %>%
     dplyr::select(RelCol) %>%
     merge(MedianPPMError, by = "ID") %>%
     dplyr::mutate(ID = as.factor(ID)) %>%

@@ -54,7 +54,7 @@
 #' 
 #' @importFrom foreach %dopar% foreach
 #' 
-#' @returns A ProteoMatch_MatchedPeaks object, which is a data.table containing the
+#' @returns A IsoMatchMS_MatchedPeaks object, which is a data.table containing the
 #'     Identifier, Adduct, M/Z, Intensity, Isotope, M/Z Search Window, Experimental M/Z,
 #'     Experimental Intensity, PPM Error, Absolute Relative Error, Correlation,
 #'     Charge, Biomolecule, and an ID. 

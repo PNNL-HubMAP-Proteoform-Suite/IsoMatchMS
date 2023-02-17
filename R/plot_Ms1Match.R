@@ -6,7 +6,7 @@
 #' @param PeakData A pspecterlib peak_data object or data.table with "M/Z" and "Intensity". Required.
 #' @param Ms1Match A IsoMatchMS1_MatchedPeaks object from match_biomolecule_to_ms1. Required.
 #' @param ID The ID in the IsoMatchMS_MatchedPeaks object to plot. Required.
-#' @param Trace Plot the mass spectrum as a continuous line rather than a series of peaks. Default is TRUE.  
+#' @param Trace Plot the mass spectrum as a continuous line rather than a series of peaks. Default is FALSE.  
 #' @param Window The -/+ m/z value on either side of the matched spectra plot. Default is 5 m/z.
 #'
 #' @returns A ggplot object
@@ -39,7 +39,11 @@
 #' )
 #' 
 #' # Make plot
-#' plot_Ms1Match(PeakData = PeakData, Ms1Match = AllMatches, ID = 1)
+#' plot_Ms1Match(
+#'   PeakData = PeakData, 
+#'   Ms1Match = IsoMatch, 
+#'   ID = 1
+#' )
 #'
 #' }
 #'
@@ -47,7 +51,7 @@
 plot_Ms1Match <- function(PeakData,
                           Ms1Match,
                           ID,
-                          Trace = TRUE, 
+                          Trace = FALSE, 
                           Window = 5) {
 
   ##################
@@ -59,9 +63,9 @@ plot_Ms1Match <- function(PeakData,
     stop("PeakData must be a pspecterlib peak_data object.")
   }
 
-  # Ms1Match should be a ProteoMatch_MatchedPeaks object
-  if ("ProteoMatch_MatchedPeaks" %in% class(Ms1Match) == FALSE) {
-    stop("Ms1Match must be a ProteoMatch_MatchedPeaks object from match_proteoform_to_ms1")
+  # Ms1Match should be a IsoMatchMS_MatchedPeaks object
+  if ("IsoMatchMS_MatchedPeaks" %in% class(Ms1Match) == FALSE) {
+    stop("Ms1Match must be a IsoMatchMS1_MatchedPeaks object from match_biomolecule_to_ms1")
   }
 
   # ID should be length one
