@@ -2,66 +2,67 @@
 % Please edit documentation in R/calculate_molform.R
 \name{calculate_molform}
 \alias{calculate_molform}
-\title{Generate a Molecular Formula Table from proteoforms}
+\title{Generate a Molecular Formula Table from provided molecular formulas, or ProForma strings}
 \usage{
 calculate_molform(
-  Modifications,
-  ModType,
-  Proteins = NULL,
+  Biomolecules,
+  BioType,
+  Identifiers = NULL,
   Charge = 1,
-  AddMostAbundantIsotope = TRUE,
+  AddMostAbundantIsotope = FALSE,
   MinAbundance = 0.1,
-  ProtonMass = 1.00727647
+  AdductMasses = c(1.00727647)
 )
 }
 \arguments{
-\item{Modifications}{A vector of ProForma strings (i.e. "M.AA\code{[}Acetyl\verb{]}AA\code{[}3.2\verb{]}.V")
-or Molecular Formulas. ProForma strings can be pulled from mzid files (MS-GF+, MSPathFinder)
+\item{Biomolecules}{A vector of Molecular Formulas or ProForma strings (i.e. "M.AA\code{[}Acetyl\verb{]}AA\code{[}3.2\verb{]}.V").
+ProForma strings can be pulled from mzid files (MS-GF+, MSPathFinder)
 with pull_modifications_from_mzid, or made with create_proforma for MSPathFinder,
 ProSight, and pTop modifications. TopPIC proteoforms are provided as ProForma
 strings. Required.}
 
-\item{ModType}{A string indicating whether the Modifications are "ProForma" strings or "Molecular Formula". Required.}
+\item{BioType}{A string indicating whether the Modifications are "ProForma" strings or "Molecular Formula". Required.}
 
-\item{Proteins}{A vector of identifiers for each protein. Optional.}
+\item{Identifiers}{A vector of identifiers for each biomolecule (i.e. protein, glycan, etc.). Optional.}
 
 \item{Charge}{The range of charges to test. Default is 1.}
 
 \item{AddMostAbundantIsotope}{A flag to determine whether the Most Abundant Isotope (MAI) should be calculated for
-every function. Will slow down tool and the MAI is calculated during the
-isotope matching step. Default is FALSE.}
+every function. This parameter will slow down tool. Default is FALSE.}
 
 \item{MinAbundance}{The minimum abundance (calculated intensity) permitted to be matched.
 Default is 0.1, which is 0.1\%. Used for most abundant isotope. This is a pspecterlib-specific
-parameter and shouldn't need to be changed for ProteoMatch.}
+parameter and shouldn't need to be changed for IsoMatchMS.}
 
-\item{ProtonMass}{The AMU mass of a proton. Default is 1.00727647.}
+\item{AdductMasses}{The masses of adducts to be tested. Proton Adducts are the default.
+Default is c(1.00727647).}
 }
 \value{
-A ProteoMatch_MolForm object, which is a data.table containing the
+A IsoMatchMS_MolForm object, which is a data.table containing the
 molecular formula, mass shift, monoisotopic mass, most abundant isotope,
-protein, charge, and proteoform.
+biomolecule identifier, and charge.
 }
 \description{
-Returns the "ProteoMatch_MolForm" object with each proteoform's
-molecular formula and adjusted mass.
+Returns the "IsoMatchMS_MolForm" object with each biomolecule's molecular formula and adjusted mass.
 }
 \details{
 The data.table outputted by this function returns 8 columns.
 \tabular{ll}{
-Molecular Formula \tab The molecular formula derived from the peptide/protein sequence and its modifications \cr
+Biomolecules \tab The provided biomolecule molecular formulas or proforma strings \cr
 \tab \cr
-Mass Shift \tab The total mass change indicated in the proteoform \cr
+Identifiers \tab The provided biomolecule identifier \cr
 \tab \cr
-Monoisotopic Mass \tab The proteoform's monoisotopic peak based on molecular formula and mass shift \cr
-\tab \cr
-Most Abundant Isotope \tab The proteoform's most abundant isotope based on molecular formula and mass shift. Only added if requested. It will be calculated during the isotope matching. \cr
-\tab \cr
-Protein \tab The provided protein identifier \cr
+Adduct \tab The adduct tested with this dataset \cr
 \tab \cr
 Charge \tab The provided charges \cr
 \tab \cr
-Proteoform \tab The provided proteoform \cr
+Molecular Formula \tab The molecular formula of the biomolecule, or derived from the peptide/protein sequence and its modifications \cr
+\tab \cr
+Mass Shift \tab The total mass change indicated in the proforma string, if provided \cr
+\tab \cr
+Monoisotopic Mass \tab The biomolecule's monoisotopic peak based on molecular formula and mass shift \cr
+\tab \cr
+Most Abundant Isotope \tab The biomolecule's most abundant isotope based on molecular formula and mass shift. Only added if requested. It will be calculated during the isotope matching. \cr
 \tab \cr
 }
 }
@@ -70,16 +71,24 @@ Proteoform \tab The provided proteoform \cr
 
 # Run one example with three charge states
 calculate_molform(
-   Proteoform = "M.(S)[Acetyl]ATNNIAQARKLVEQLRIEAGIERIKVSKAASDLMSYCEQHARNDPLLVGVPASENPFKDK(KPCIIL)[-52.9879].",
-   Protein = "O60262",
+   Biomolecules = "M.(S)[Acetyl]ATNNIAQARKLVEQLRIEAGIERIKVSKAASDLMSYCEQHARNDPLLVGVPASENPFKDK(KPCIIL)[-52.9879].",
+   BioType = "ProForma",
+   Identifiers = "O60262",
    Charge = 1:3
 )
 
 # Run two examples with two charge states
 calculate_molform(
-   Proteoform = c("M.SS[Methyl]S.V", "M.S[Methyl]S[22]S[23].V"),
-   Protein = c("Test1", "Test2"),
+   Biomolecules = c("M.SS[Methyl]S.V", "M.S[Methyl]S[22]S[23].V"),
+   BioType = "ProForma",
    Charge = 1:2
+)
+
+# Run an example with molecular formulas
+calculate_molform(
+   Biomolecules = c("C6H12O6", "C2H4O1"),
+   BioType = "Molecular Formula",
+   Identifiers = c("Glucose", "Acetyl")
 )
 
 }

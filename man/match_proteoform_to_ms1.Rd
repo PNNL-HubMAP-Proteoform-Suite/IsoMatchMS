@@ -9,7 +9,7 @@ match_proteoform_to_ms1(
   MolecularFormulas,
   MatchingAlgorithm,
   MinAbundance = 0.1,
-  PPMSearchWindow = 50,
+  PPMThreshold = 10,
   IsotopeRange = c(5, 20),
   ProtonMass = 1.00727647
 )
@@ -30,7 +30,7 @@ and "highest abundance" is recommended for noisy datasets or those with many pea
 \item{MinAbundance}{The minimum abundance (calculated intensity) permitted
 to be matched. Default is 0.1, which is 0.1\%.}
 
-\item{PPMSearchWindow}{The window in PPM to search for peaks around the true peak. Required. Default is 50 ppm.}
+\item{PPMThreshold}{The window in PPM to search for peaks around the true peak. Required. Default is 10 ppm.}
 
 \item{IsotopeRange}{The minimum and maximum number of isotopes to consider. Default is c(3,20).}
 

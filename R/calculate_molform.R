@@ -1,109 +1,120 @@
-#' Generate a Molecular Formula Table from proteoforms
+#' Generate a Molecular Formula Table from provided molecular formulas, or ProForma strings
+#' 
+#' @description Returns the "IsoMatchMS_MolForm" object with each biomolecule's molecular formula and adjusted mass.
 #'
-#' @description Returns the "ProteoMatch_MolForm" object with each proteoform's
-#'     molecular formula and adjusted mass.
-#'
-#' @param Modifications A vector of ProForma strings (i.e. "M.AA`[`Acetyl`]`AA`[`3.2`]`.V") 
-#'    or Molecular Formulas. ProForma strings can be pulled from mzid files (MS-GF+, MSPathFinder) 
+#' @param Biomolecules A vector of Molecular Formulas or ProForma strings (i.e. "M.AA`[`Acetyl`]`AA`[`3.2`]`.V"). 
+#'    ProForma strings can be pulled from mzid files (MS-GF+, MSPathFinder) 
 #'    with pull_modifications_from_mzid, or made with create_proforma for MSPathFinder,
 #'    ProSight, and pTop modifications. TopPIC proteoforms are provided as ProForma
 #'    strings. Required.
-#' @param ModType A string indicating whether the Modifications are "ProForma" strings or "Molecular Formula". Required. 
-#' @param Proteins A vector of identifiers for each protein. Optional.
+#' @param BioType A string indicating whether the Modifications are "ProForma" strings or "Molecular Formula". Required. 
+#' @param Identifiers A vector of identifiers for each biomolecule (i.e. protein, glycan, etc.). Optional.
 #' @param Charge The range of charges to test. Default is 1.
 #' @param AddMostAbundantIsotope A flag to determine whether the Most Abundant Isotope (MAI) should be calculated for 
-#'     every function. Will slow down tool and the MAI is calculated during the 
-#'     isotope matching step. Default is FALSE. 
+#'     every function. This parameter will slow down tool. Default is FALSE. 
 #' @param MinAbundance The minimum abundance (calculated intensity) permitted to be matched. 
 #'     Default is 0.1, which is 0.1%. Used for most abundant isotope. This is a pspecterlib-specific
-#'     parameter and shouldn't need to be changed for ProteoMatch. 
-#' @param ProtonMass The AMU mass of a proton. Default is 1.00727647.
+#'     parameter and shouldn't need to be changed for IsoMatchMS. 
+#' @param AdductMasses The masses of adducts to be tested. Proton Adducts are the default. 
+#'     Default is c(1.00727647).
 #'
 #' @details
 #' The data.table outputted by this function returns 8 columns.
 #' \tabular{ll}{
-#' Molecular Formula \tab The molecular formula derived from the peptide/protein sequence and its modifications \cr
+#' Biomolecules \tab The provided biomolecule molecular formulas or proforma strings \cr
 #' \tab \cr
-#' Mass Shift \tab The total mass change indicated in the proteoform \cr
+#' Identifiers \tab The provided biomolecule identifier \cr
 #' \tab \cr
-#' Monoisotopic Mass \tab The proteoform's monoisotopic peak based on molecular formula and mass shift \cr
-#' \tab \cr
-#' Most Abundant Isotope \tab The proteoform's most abundant isotope based on molecular formula and mass shift. Only added if requested. It will be calculated during the isotope matching. \cr
-#' \tab \cr
-#' Protein \tab The provided protein identifier \cr
+#' Adduct \tab The adduct tested with this dataset \cr
 #' \tab \cr
 #' Charge \tab The provided charges \cr
 #' \tab \cr
-#' Proteoform \tab The provided proteoform \cr
+#' Molecular Formula \tab The molecular formula of the biomolecule, or derived from the peptide/protein sequence and its modifications \cr
+#' \tab \cr
+#' Mass Shift \tab The total mass change indicated in the proforma string, if provided \cr
+#' \tab \cr
+#' Monoisotopic Mass \tab The biomolecule's monoisotopic peak based on molecular formula and mass shift \cr
+#' \tab \cr
+#' Most Abundant Isotope \tab The biomolecule's most abundant isotope based on molecular formula and mass shift. Only added if requested. It will be calculated during the isotope matching. \cr
 #' \tab \cr
 #' }
 #'
 #' @importFrom foreach %dopar% foreach
 #' 
-#' @returns A ProteoMatch_MolForm object, which is a data.table containing the
+#' @returns A IsoMatchMS_MolForm object, which is a data.table containing the
 #'     molecular formula, mass shift, monoisotopic mass, most abundant isotope,
-#'     protein, charge, and proteoform.
+#'     biomolecule identifier, and charge.
 #'
 #' @examples
 #' \dontrun{
 #'
 #' # Run one example with three charge states
 #' calculate_molform(
-#'    Proteoform = "M.(S)[Acetyl]ATNNIAQARKLVEQLRIEAGIERIKVSKAASDLMSYCEQHARNDPLLVGVPASENPFKDK(KPCIIL)[-52.9879].",
-#'    Protein = "O60262",
+#'    Biomolecules = "M.(S)[Acetyl]ATNNIAQARKLVEQLRIEAGIERIKVSKAASDLMSYCEQHARNDPLLVGVPASENPFKDK(KPCIIL)[-52.9879].",
+#'    BioType = "ProForma",
+#'    Identifiers = "O60262",
 #'    Charge = 1:3
 #' )
 #'
 #' # Run two examples with two charge states
 #' calculate_molform(
-#'    Proteoform = c("M.SS[Methyl]S.V", "M.S[Methyl]S[22]S[23].V"),
-#'    Protein = c("Test1", "Test2"),
+#'    Biomolecules = c("M.SS[Methyl]S.V", "M.S[Methyl]S[22]S[23].V"),
+#'    BioType = "ProForma",
 #'    Charge = 1:2
+#' )
+#'
+#' # Run an example with molecular formulas
+#' calculate_molform(
+#'    Biomolecules = c("C6H12O6", "C2H4O1"),
+#'    BioType = "Molecular Formula",
+#'    Identifiers = c("Glucose", "Acetyl")
 #' )
 #'
 #' }
 #'
 #' @export
-calculate_molform <- function(Modifications,
-                              ModType,
-                              Proteins = NULL,
+calculate_molform <- function(Biomolecules,
+                              BioType,
+                              Identifiers = NULL,
                               Charge = 1,
-                              AddMostAbundantIsotope = TRUE,
+                              AddMostAbundantIsotope = FALSE,
                               MinAbundance = 0.1,
-                              ProtonMass = 1.00727647) {
+                              AdductMasses = c(1.00727647)) {
 
   ##################
   ## CHECK INPUTS ##
   ##################
 
   # Modifications should be a string
-  if (is.null(Modifications) || !is.character(Modifications)) {
-    stop("Modifications must be a vector of characters.")
+  if (is.null(Biomolecules) || !is.character(Biomolecules)) {
+    stop("Biomolecules must be a vector of characters.")
   }
   
   # Blank or empty modifications are not permitted
-  if (lapply(Modifications, function(x) {is.null(x) || is.na(x) || x == ""}) %>% unlist() %>% any()) {
-    stop("Modifications cannot be NULL, NA, or blank.")
+  if (lapply(Biomolecules, function(x) {is.null(x) || is.na(x) || x == ""}) %>% unlist() %>% any()) {
+    stop("Biomolecules cannot be NULL, NA, or blank.")
   }
   
-  # Check that ModType is "Molecular Formula" or "ProForma"
-  if (length(ModType) != 1 | !is.character(ModType) || (ModType != "ProForma" & ModType != "Molecular Formula")) {
-    stop("ModType can either be 'ProForma' or 'Molecular Formula'")
+  # Check that BioType is "Molecular Formula" or "ProForma"
+  if (length(BioType) != 1 | !is.character(BioType) || (BioType != "ProForma" & BioType != "Molecular Formula")) {
+    stop("BioType can either be 'ProForma' or 'Molecular Formula'")
   }
 
-  # If protein is not NULL...
-  if (!is.null(Proteins)) {
+  # If Identifiers is not NULL...
+  if (!is.null(Identifiers)) {
 
-    # Proteins should be a string
-    if (!is.character(Proteins)) {
-      stop("Proteins must be a vector of characters.")
+    # Identifiers should be a string
+    if (!is.character(Identifiers)) {
+      stop("Identifiers must be a vector of characters.")
     }
 
-    # Proteoform and Proteins should be the same length
-    if (length(Modifications) != length(Proteins)) {
-      stop("Modifications and Proteins must be of the same length.")
+    # Biomolecules and Identifiers should be the same length
+    if (length(Biomolecules) != length(Identifiers)) {
+      stop("Biomolecules and Identifiers must be of the same length.")
     }
 
+  } else {
+    Identifiers <- rep("NA", length(Biomolecules))
   }
 
   # Charge must be numeric and will be rounded to integers
@@ -118,8 +129,8 @@ calculate_molform <- function(Modifications,
   }
   
   # Proton Mass must be a single numeric
-  if (length(ProtonMass) != 1 | !is.numeric(ProtonMass)) {
-    stop("ProtonMass must be a single numeric.")
+  if (length(AdductMasses) != 1 | !is.numeric(AdductMasses)) {
+    stop("AdductMasses must be a single numeric.")
   }
   
   ###################
@@ -135,17 +146,17 @@ calculate_molform <- function(Modifications,
   ## RUN ITERATOR ##
   ##################
 
-  .calculate_molform_iterator <- function(Proteoform, Name, Charge) {
+  .calculate_molform_iterator <- function(Biomolecule, Name, Charge) {
 
     #######################################
     ## GET MODIFICATION NAMES AND MASSES ##
     #######################################
     
     # If the input is a ProForma string
-    if (ModType == "ProForma") {
+    if (BioType == "ProForma") {
     
       # Get modifications and sequence 
-      PTMs <- pspecterlib::convert_proforma(Proteoform) 
+      PTMs <- pspecterlib::convert_proforma(Biomolecule) 
       
       # If PTMs is not a modifications_pspecter object (i.e. a sequence was just returned), use a divergent path 
       if (!inherits(PTMs, "modifications_pspecter")) {
@@ -163,7 +174,7 @@ calculate_molform <- function(Modifications,
         
         # Get the monoisotopic mass
         MonoisotopicMass <- pspecterlib::get_monoisotopic(Formula)
-        MonoMass <- (MonoisotopicMass + (Charge * ProtonMass)) / Charge
+        MonoMass <- (MonoisotopicMass + (Charge * AdductMasses)) / Charge
         
         # Set MAI to NA if not included 
         MAI <- NA
@@ -176,14 +187,14 @@ calculate_molform <- function(Modifications,
           
           # Get the most abundant isotope
           MAI <- Isotopes[which.max(Isotopes$abundance), "mass"] %>% unlist()
-          MAI <- (MAI + (Charge * ProtonMass)) / Charge
+          MAI <- (MAI + (Charge * AdductMasses)) / Charge
           
         }
         
       
         # Generate data table
         ProteoMatch_MolForm <- data.table::data.table(
-          "Proteoform" = Proteoform,
+          "Biomolecules" = Biomolecule,
           "Name" = Name, 
           "Charge" = Charge,
           "Molecular Formula" = MolForm, 
@@ -233,7 +244,7 @@ calculate_molform <- function(Modifications,
       MonoisotopicMass <- pspecterlib::get_monoisotopic(Formula)
   
       # Get monoisotopic mass, which will always be the first one
-      MonoMass <- (MonoisotopicMass + (Charge * ProtonMass)) / Charge
+      MonoMass <- (MonoisotopicMass + (Charge * AdductMasses)) / Charge
       
       # Set MAI to NA if not included 
       MAI <- NA
@@ -246,7 +257,7 @@ calculate_molform <- function(Modifications,
         
         # Get the most abundant isotope
         MAI <- Isotopes[which.max(Isotopes$abundance), "mass"] %>% unlist()
-        MAI <- (MAI + (Charge * ProtonMass)) / Charge
+        MAI <- (MAI + (Charge * AdductMasses)) / Charge
         
       }
   
@@ -262,8 +273,9 @@ calculate_molform <- function(Modifications,
       
       # Generate data table
       ProteoMatch_MolForm <- data.table::data.table(
-        "Proteoform" = Proteoform,
-        "Name" = Name, 
+        "Biomolecules" = Biomolecule,
+        "Identifiers" = Name, 
+        "Adduct" = AdductMasses,
         "Charge" = Charge,
         "Molecular Formula" = MolForm, 
         "Mass Shift" = sum(MassChanges), 
@@ -274,16 +286,16 @@ calculate_molform <- function(Modifications,
       # Return object
       return(ProteoMatch_MolForm)
   
-    } else if (ModType == "Molecular Formula") {
+    } else if (BioType == "Molecular Formula") {
       
       # Read the molecular formula
-      Formula <- pspecterlib::as.molform(Proteoform)
+      Formula <- pspecterlib::as.molform(Biomolecule)
       
       # Get Monoisotopic Mass
       MonoisotopicMass <- pspecterlib::get_monoisotopic(Formula)
       
       # Adjust for the charge
-      MonoMass <- (MonoisotopicMass + (Charge * ProtonMass)) / Charge
+      MonoMass <- (MonoisotopicMass + (Charge * AdductMasses)) / Charge
       
       if (AddMostAbundantIsotope) {
       
@@ -292,15 +304,16 @@ calculate_molform <- function(Modifications,
         
         # Get the most abundant isotope
         MAI <- Isotopes[which.max(Isotopes$abundance), "mass"] %>% unlist()
-        MAI <- (MAI + (Charge * ProtonMass)) / Charge
+        MAI <- (MAI + (Charge * AdductMasses)) / Charge
         
       } else {MAI <- NA}
       
       ProteoMatch_MolForm <- data.table::data.table(
-        "Proteoform" = Proteoform,
-        "Name" = Name,
+        "Biomolecules" = Biomolecules,
+        "Identifiers" = Name,
+        "Adduct" = AdductMasses,
         "Charge" = Charge,
-        "Molecular Formula" = Proteoform, 
+        "Molecular Formula" = Biomolecules, 
         "Mass Shift" = 0,
         "Monoisotopic Mass" = MonoMass,
         "Most Abundant Isotope" = MAI
@@ -309,11 +322,11 @@ calculate_molform <- function(Modifications,
     }
     
   }
-  
-  # Iterate through proteoforms and charges, and calculate all required values
+
+  # Iterate through Biomoleculess and charges, and calculate all required values
   Pre_MolForms <- data.table::data.table(
-    Pform = rep(Modifications, each = length(Charge)),
-    theName = rep(Proteins, each = length(Charge)),
+    Pform = rep(Biomolecules, each = length(Charge)),
+    theName = rep(Identifiers, each = length(Charge)),
     ChargeValue = Charge
   ) %>%
     unique()
@@ -324,14 +337,14 @@ calculate_molform <- function(Modifications,
   # Collect results
   All_MolForms <- foreach(it = 1:nrow(Pre_MolForms), .combine = rbind) %dopar% {
     .calculate_molform_iterator(
-      Proteoform = Pre_MolForms$Pform[it],
+      Biomolecule = Pre_MolForms$Pform[it],
       Name = Pre_MolForms$theName[it],
       Charge = Pre_MolForms$ChargeValue[it]
     )
   }
 
   # Add class
-  class(All_MolForms) <- c("ProteoMatch_MolForm", class(All_MolForms))
+  class(All_MolForms) <- c("IsoMatchMS_MolForm", class(All_MolForms))
 
   return(All_MolForms)
 
