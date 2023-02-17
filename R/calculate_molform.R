@@ -25,7 +25,7 @@
 #' \tab \cr
 #' Identifiers \tab The provided biomolecule identifier \cr
 #' \tab \cr
-#' Adduct \tab The adduct tested with this dataset \cr
+#' Adduct \tab The provided adduct \cr
 #' \tab \cr
 #' Charge \tab The provided charges \cr
 #' \tab \cr

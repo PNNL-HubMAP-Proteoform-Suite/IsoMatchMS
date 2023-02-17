@@ -2,16 +2,16 @@
 % Please edit documentation in R/plot_Ms1Match.R
 \name{plot_Ms1Match}
 \alias{plot_Ms1Match}
-\title{Plots the Proteoform Isotope Profile on top of the experimental sequence}
+\title{Plots the Biomolecule Isotope Profile on top of the experimental sequence}
 \usage{
 plot_Ms1Match(PeakData, Ms1Match, ID, Trace = TRUE, Window = 5)
 }
 \arguments{
 \item{PeakData}{A pspecterlib peak_data object or data.table with "M/Z" and "Intensity". Required.}
 
-\item{Ms1Match}{A ProteoMatch_MatchedPeaks object from match_full_seq_ms1. Required.}
+\item{Ms1Match}{A IsoMatchMS1_MatchedPeaks object from match_biomolecule_to_ms1. Required.}
 
-\item{ID}{The ID in the ProteoMatch_MatchedPeaks object to plot. Required.}
+\item{ID}{The ID in the IsoMatchMS_MatchedPeaks object to plot. Required.}
 
 \item{Trace}{Plot the mass spectrum as a continuous line rather than a series of peaks. Default is TRUE.}
 
@@ -21,7 +21,7 @@ plot_Ms1Match(PeakData, Ms1Match, ID, Trace = TRUE, Window = 5)
 A ggplot object
 }
 \description{
-Returns a static plot with identified calculated proteoform peaks
+Returns a static plot with identified calculated peaks
 plotted over the experimental spectrum.
 }
 \examples{
@@ -29,22 +29,26 @@ plotted over the experimental spectrum.
 
 # Run two examples with two charge states
 MolForms_Test <- calculate_molform(
-   Proteoform = c("M.SS[Methyl]S.V", "M.SS[6]S[7].V"),
-   Protein = c("Test1", "Test2"),
-   Charge = 1:2
+  Biomolecule = c("M.SS[Methyl]S.V", "M.SS[6]S[7].V"),
+  BioType = "ProForma",
+  Identifiers = c("Test1", "Test2"),
+  Charge = 1:2
 )
 
 # Generate some experimental peak data to match
 PeakData <- pspecterlib::make_peak_data(
-   MZ = c(294.1296, 295.1325, 296.1343, 297.1369, 298.1390),
-   Intensity = c(868.3680036, 110.9431876, 18.7179196, 1.7871629, 0.1701294)
+  MZ = c(147.5684, 148.0699, 148.5708, 149.0721, 149.5731,
+         294.1296, 295.1325, 296.1343, 297.1369, 298.1390),
+  Intensity = c(868.3680036, 110.9431876, 18.7179196, 1.7871629, 0.1701294,
+                868.3680036, 110.9431876, 18.7179196, 1.7871629, 0.1701294)
 )
 
 # Run algorithm
-AllMatches <- match_proteoform_to_ms1(
-   PeakData = PeakData,
-   MolecularFormula = MolForms_Test,
-   IsotopeRange = c(3,20)
+IsoMatch <- match_biomolecule_to_ms1(
+  PeakData = PeakData,
+  MatchingAlgorithm = "closest peak",
+  MolecularFormula = MolForms_Test,
+  IsotopeRange = c(3, 20)
 )
 
 # Make plot

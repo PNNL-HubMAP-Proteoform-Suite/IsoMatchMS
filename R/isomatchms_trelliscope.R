@@ -12,15 +12,15 @@
   }
 }
 
-#' Generate a trelliscope display for all Proteoform to MS1 Matches
+#' Generate a trelliscope display for all Biomolecule to MS1 Matches
 #'
 #' @description [Trelliscope](https://github.com/hafen/trelliscopejs) allows
 #'    users to filter and sort plots based on cognostic variables. For this dataset,
 #'    the plots are generated with the plot_Ms1Match function, and the cognostics
-#'    are: Protein, Absolute Relative Error, Correlation, Charge, Proteoform, and ID.
+#'    are: Identifiers, Absolute Relative Error, Correlation, Charge, Biomolecules, and ID.
 #'
 #' @param PeakData A pspecterlib peak_data object or data.table with "M/Z" and "Intensity". Required.
-#' @param Ms1Match A ProteoMatch_MatchedPeaks class object from match_full_seq_ms1. Required.
+#' @param Ms1Match A IsoMatchMS_MatchedPeaks class object from match_full_seq_ms1. Required.
 #' @param Path The base directory of the trelliscope application. Default is Downloads/Ms1Match.
 #' @param MinCorrelationScore The minimum correlation score to plot. Default is 0.7.
 #' @param Window The -/+ m/z value on either side of the matched spectra plot. Default is 2 m/z.
@@ -32,8 +32,9 @@
 #'
 #' # Run two examples with two charge states
 #' MolForms_Test <- calculate_molform(
-#'   Proteoform = c("M.SS[Methyl]S.V", "M.SS[6]S[7].V"),
-#'   Protein = c("Test1", "Test2"),
+#'   Biomolecule = c("M.SS[Methyl]S.V", "M.SS[6]S[7].V"),
+#'   BioType = "ProForma",
+#'   Identifiers = c("Test1", "Test2"),
 #'   Charge = 1:2
 #' )
 #'
@@ -46,20 +47,21 @@
 #' )
 #'
 #' # Run algorithm
-#' ProteoMatch <- match_proteoform_to_ms1(
+#' IsoMatch <- match_biomolecule_to_ms1(
 #'   PeakData = PeakData,
+#'   MatchingAlgorithm = "closest peak",
 #'   MolecularFormula = MolForms_Test,
 #'   IsotopeRange = c(3, 20)
 #' )
 #'
 #' # Make the trelliscope display
-#' proteomatch_trelliscope(PeakData = PeakData, Ms1Match = ProteoMatch)
+#' isomatchms_trelliscope(PeakData = PeakData, Ms1Match = IsoMatch)
 #'
 #' }
 #'
 #'
 #' @export
-proteomatch_trelliscope <- function(PeakData,
+isomatchms_trelliscope <- function(PeakData,
                                     Ms1Match,
                                     Path = file.path(.getDownloadsFolder(), "Ms1Match", "Trelliscope"),
                                     MinCorrelationScore = 0.7,
@@ -75,8 +77,8 @@ proteomatch_trelliscope <- function(PeakData,
   }
 
   # Ms1Match should be a ProteoMatch_MatchedPeaks object
-  if ("ProteoMatch_MatchedPeaks" %in% class(Ms1Match) == FALSE) {
-    stop("Ms1Match must be a ProteoMatch_MatchedPeaks object from match_proteoform_to_ms1")
+  if ("IsoMatchMS_MatchedPeaks" %in% class(Ms1Match) == FALSE) {
+    stop("Ms1Match must be a IsoMatchMS_MatchedPeaks object from match_proteoform_to_ms1")
   }
 
   # Check that minimum correlation score is within 0-1
@@ -106,8 +108,8 @@ proteomatch_trelliscope <- function(PeakData,
     dplyr::filter(Correlation >= MinCorrelationScore)
 
   # List relevant ProteoMatch columns
-  RelCol <- c("Protein", "Absolute Relative Error", "Correlation", "Molecular Formula",
-              "Monoisotopic Mass", "Figure of Merit", "Charge", "Proteoform", "ID")
+  RelCol <- c("Identifiers", "Absolute Relative Error", "Correlation", "Molecular Formula",
+              "Monoisotopic Mass", "Figure of Merit", "Charge", "Biomolecules", "ID")
 
   # Calculate Median PPM Error and Minimum MZ
   MedianPPMError <- ProteoMatchTrelli %>%

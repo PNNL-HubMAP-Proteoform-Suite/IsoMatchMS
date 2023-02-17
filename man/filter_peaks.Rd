@@ -21,7 +21,7 @@ for peaks. A reasonable value should be in the 0.01 - 5.0\% range. Default is 1\
 A peak_data object that has been filtered.
 }
 \description{
-For best results in the ProteoMatch algorithm, it's best to filter
+For best results in the IsoMatchMS algorithm, it's best to filter
 by a specific M/Z range and a noise threshold.
 }
 \examples{

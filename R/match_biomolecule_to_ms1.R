@@ -1,12 +1,13 @@
 #' Matches experimental peaks to calculated isotope profile
 #'
-#' @description Returns the "ProteoMatch_MatchedPeaks" object with peaks that
-#'     have matched to the isotoping profile. This object can be passed to downstream
+#' @description Returns the "IsoMatchMS_MatchedPeaks" object with peaks that
+#'     have matched to the isotope profile. This object can be passed to downstream
 #'     plotting functions.
 #'
 #' @param PeakData A pspecterlib peak_data object made with "make_peak_data" or
-#'     extracted from a raw or mzML file with "get_peak_data." Use centroided data. Required.
-#' @param MolecularFormulas A "ProteoMatch_MolForm" object with Molecular Formulas,
+#'     extracted from a raw or mzML file with "get_peak_data." Use of centroided data
+#'     is recommended, but not required.
+#' @param MolecularFormulas A "IsoMatchMS_MolForm" object with Molecular Formulas,
 #'     Mass Shifts, and Charges.
 #' @param MatchingAlgorithm Either "closest peak" or "highest abundance" where the "closest
 #'    peak" implementation chooses the peak closest to the true M/Z value within the PPM window
@@ -17,12 +18,13 @@
 #'     to be matched. Default is 0.1, which is 0.1%.
 #' @param PPMThreshold The window in PPM to search for peaks around the true peak. Required. Default is 10 ppm.
 #' @param IsotopeRange The minimum and maximum number of isotopes to consider. Default is c(3,20).
-#' @param ProtonMass The AMU mass of a proton. Default is 1.00727647.
 #'
 #' @details
 #' The data.table outputted by this function contains 12 columns
 #' \tabular{ll}{
-#' Protein \tab The provided protein identifier \cr
+#' Identifier \tab The provided biomolecule identifier \cr
+#' \tab \cr
+#' Adduct \tab The provided adduct \cr
 #' \tab \cr
 #' M/Z \tab The calculated M/Z of a particular isotope \cr
 #' \tab \cr
@@ -44,7 +46,7 @@
 #' \tab \cr
 #' Charge \tab The provided charges \cr
 #' \tab \cr
-#' Proteoform \tab The provided proteoform \cr
+#' Biomolecule \tab The provided biomolecule \cr
 #' \tab \cr
 #' ID \tab A unique ID for each Proteoform, Protein, and Charge combination used in plotting functions \cr
 #' \tab \cr
@@ -53,17 +55,18 @@
 #' @importFrom foreach %dopar% foreach
 #' 
 #' @returns A ProteoMatch_MatchedPeaks object, which is a data.table containing the
-#'     Protein, M/Z, Intensity, Isotope, M/Z Search Window, Experimental M/Z,
+#'     Identifier, Adduct, M/Z, Intensity, Isotope, M/Z Search Window, Experimental M/Z,
 #'     Experimental Intensity, PPM Error, Absolute Relative Error, Correlation,
-#'     Charge, and Proteoform.
+#'     Charge, Biomolecule, and an ID. 
 #'
 #' @examples
 #' \dontrun{
 #'
 #' # Run two examples with two charge states
 #' MolForms_Test <- calculate_molform(
-#'    Proteoform = c("M.SS[Methyl]S.V", "M.SS[6]S[7].V"),
-#'    Protein = c("Test1", "Test2"),
+#'    Biomolecules = c("M.SS[Methyl]S.V", "M.SS[6]S[7].V"),
+#'    BioType = "ProForma", 
+#'    Identifiers = c("Test1", "Test2"),
 #'    Charge = 1:2
 #' )
 #'
@@ -74,16 +77,17 @@
 #' )
 #'
 #' # Run algorithm
-#' match_proteoform_to_ms1(
+#' match_biomolecule_to_ms1(
 #'    PeakData = PeakData,
 #'    MolecularFormula = MolForms_Test,
+#'    MatchingAlgorithm = "closest peak",
 #'    IsotopeRange = c(3,20)
 #' )
 #'
 #' }
 #'
 #' @export
-match_proteoform_to_ms1 <- function(PeakData,
+match_biomolecule_to_ms1 <- function(PeakData,
                                     MolecularFormulas,
                                     MatchingAlgorithm, 
                                     MinAbundance = 0.1,
@@ -101,8 +105,8 @@ match_proteoform_to_ms1 <- function(PeakData,
   }
 
   # Check that molecular formula is a string
-  if (inherits(MolecularFormulas, "ProteoMatch_MolForm") == FALSE) {
-    stop("MolecularFormula must be a ProteoMatch_MolForm object.")
+  if (inherits(MolecularFormulas, "IsoMatchMS_MolForm") == FALSE) {
+    stop("MolecularFormula must be an IsoMatchMS_MolForm object.")
   }
 
   # PPM Threshold
@@ -321,18 +325,11 @@ match_proteoform_to_ms1 <- function(PeakData,
   AllMatches <- merge(MolFormTable, MolecularFormulas, by = c("Monoisotopic Mass", "Mass Shift", "Molecular Formula", "Charge"), all.x = T) %>%
     dplyr::mutate(ID = as.numeric(as.factor(ID))) 
   
-  # Protein names are 100% optional
-  if ("Name" %in% colnames(AllMatches)) {
-    AllMatches <- AllMatches %>% dplyr::rename(Protein = Name)
-  } else {
-    AllMatches$Protein <- NA
-  }
-  
   AllMatches <- AllMatches %>%
     dplyr::select(
-      Protein, `M/Z`, `Monoisotopic Mass`, Abundance, Isotope, `M/Z Search Window`, `M/Z Experimental`,
+      Identifiers, `M/Z`, `Monoisotopic Mass`, Abundance, Isotope, `M/Z Search Window`, `M/Z Experimental`,
       `Intensity Experimental`, `Abundance Experimental`, `PPM Error`, `Absolute Relative Error`,
-      Correlation, `Figure of Merit`, Charge, Proteoform, `Molecular Formula`,
+      Correlation, `Figure of Merit`, Charge, Biomolecules, `Molecular Formula`,
       `Most Abundant Isotope`, ID
      ) %>% 
     unique()
@@ -344,7 +341,7 @@ match_proteoform_to_ms1 <- function(PeakData,
   }
 
   # Add class, and return object
-  class(AllMatches) <- c(class(AllMatches), "ProteoMatch_MatchedPeaks")
+  class(AllMatches) <- c(class(AllMatches), "IsoMatchMS_MatchedPeaks")
 
   return(AllMatches)
 
