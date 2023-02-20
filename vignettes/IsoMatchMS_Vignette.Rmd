@@ -1,12 +1,12 @@
 ---
-title: "ProteoMatch Vignette"
+title: "IsoMatchMS Vignette"
 output: 
   BiocStyle::html_document:
           toc_float: true
           code_folding: hide
           lib_dir: trelli
 vignette: >
-  %\VignetteIndexEntry{ProteoMatch_Large_Fragments}
+  %\VignetteIndexEntry{IsoMatchMS_Large_Fragments}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -20,177 +20,107 @@ knitr::opts_chunk$set(
 
 ```{r setup, messages = F, warnings = FALSE}
 suppressWarnings({
-  library(ProteoMatch)
-  library(pspectorlib)
+  library(IsoMatchMS)
+  library(pspecterlib)
   library(ggplot2)
+  library(xlsx)
 })
 ```
 
-# What is ProteoMatch
+# What is IsoMatchMS?
 
-ProteoMatch is a package designed to match proteoforms to MS1 spectra, allowing for
-researchers to identify the proteins in their data. The output is then shown to the
-user through a trelliscope display, which allows for easy sorting and comparison
-of the matches found in the data. 
+IsoMatchMS is a package designed to match isotope profiles to MS1 spectra, allowing for
+the characterization of high-quality biomolecule annotations. Best isotope matches are
+then visualized in a [trelliscope](https://github.com/hafen/trelliscopejs) display,
+which allows for easy sorting and comparison of isotope matches found in the data. 
 
-![Alt text](./Graphical_Abstract.png "Graphical Abstract of the ProteoMatch Package")
+![Alt text](./Graphical_Abstract.png "Graphical Abstract of the IsoMatchMS Package")
 
-This package draws heavily from the pspector package. pspectorlib has various support 
-for MS proteomics in R, including making peak_data objectsMore information about that 
-package can be found [here](https://github.com/EMSL-Computing/pspectorlib).
+Much of the backend functionality is drawn from the pspecterlib package, including
+generating molecular formula objects. More information about the backend package
+can be found [here](https://github.com/EMSL-Computing/pspecterlib).
 
-# Wrapper Function - run_proteomatch()
+# Wrapper Function - run_isomatchms()
 
-The ProteoMatch pipeline can be run with a single wrapper function, `run_proteomatch()`.
-The function requires a vector containing either proforma strings or molecular formulas 
-of the proteins you wish to match, a Settings File specifying the run's parameters in 
-the form of an .xlsx, and finally a pspectorlib peak_data object. 
+We encourage new users to run IsoMatchMS with a single wrapper function, `run_isomatchms()`.
+The function requires, at a minimum, a vector containing either 
+[ProForma](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5837035/) strings or molecular formulas 
+of the biomolecules to match, a Settings File specifying the runs parameters in 
+the form of an .xlsx, and finally a pspecterlib peak_data object. 
 
-More examples can be found below. Both of these datasets can be
+More examples can be found below. Example datasets can be
 found in the `ProteoMatch/inst/extdata` directory.
 
 ## Intact Proteins Example
 
-The following shows an example use of the `run_proteomatch()` function containing
+The following shows an example use of the `run_isomatchms()` function containing
 intact protein test data (also known as top-down proteomics). These proteins are 
-considered intact since they have not been digested, or only very lightly digested. 
+"intact" and have not been digested into peptides.
 
 Below, the .csv containing protein information is loaded in, along with the pre-made 
-pspectorlib peak_data object. Further instructions on how to make this can be found 
+pspecterlib peak_data object. Further instructions on how to make this can be found 
 in Section 2.3. 
 
 ```{r, eval=FALSE}
-#reading in test data
-Protein_data <- read.csv("../inst/extdata/Intact_Proteins_List_Short.csv", sep = "\t")
-peak_data <- readRDS("../inst/extdata/Intact_PeakData.RDS")
+# Read in the protein test data
+protein_data <- read.csv(system.file("extdata", "Intact_Proteins_List_Short.csv", package = "IsoMatchMS"))
+peak_data <- readRDS(system.file("extdata", "Intact_PeakData.RDS", package = "IsoMatchMS"))
 
-#running proteomatch wrapper function
-run_proteomatch(
-    Modifications = Protein_data$Formula,
-    ModType = "Proforma",
+# Run the IsoMatchMS wrapper function
+run_isomatchms(
+    Biomolecules = protein_data$Proteoform,
+    BioType = "ProForma",
     SummedSpectra = peak_data,
-    SettingsFile = "../inst/extdata/Intact_Protein_Defaults.xlsx",
-    Proteins = Protein_data$Protein
-    )
+    SettingsFile = system.file("extdata", "Intact_Protein_Defaults.xlsx", package = "IsoMatchMS"),
+    Path = "~/Downloads/Small_Intact_Test",
+    Identifiers = protein_data$Protein.accession
+)
 ```
 
 ## Peptides Example
 
-The following shows an example use of the `run_proteomatch()` function containing 
-peptides test data (also known as bottom-up proteomics) This data is considered peptide 
-data since it has beenheavily digested, and only contains proteins of a relitivly 
-small size.
-
-Below, the .tsv containing protein information is loaded in, along with the pre-made 
-pspectorlib peak_data object. Further instructions on how to make this can be found 
-in Section 2.3. 
+The following shows an example use of the `run_isomatchms()` function with the 
+peptides test data (also known as bottom-up proteomics). In other words, the
+proteins have been digested into peptides. 
 
 ```{r, eval=FALSE}
-Protein_data <- read.csv("../inst/extdata/Peptides_List_Short.csv")
-peak_data <- readRDS("../inst/extdata/Peptides_PeakData.RDS")
+# Read in the peptide test data 
+peptide_data <- read.csv(system.file("extdata", "Peptides_List_Short.csv", package = "IsoMatchMS"))
+digested_peak_data <- readRDS(system.file("extdata", "Peptides_PeakData.RDS", package = "IsoMatchMS"))
 
-run_proteomatch(Modifications = Protein_data$Proteoform,
-    ModType = "ProForma",
-    SummedSpectra = peak_data,
-    SettingsFile = "../inst/extdata/Peptides_Defaults.xlsx.xlsx",
-    Proteins = Protein_data$Protein
-    )
+# Run the IsoMatchMS wrapper function
+run_isomatchms(
+    Biomolecules = peptide_data$Proteoform,
+    BioType = "ProForma",
+    SummedSpectra = digested_peak_data,
+    SettingsFile = system.file("extdata", "Peptides_Defaults.xlsx", package = "IsoMatchMS"),
+    Path = "~/Downloads/Small_Peptides_Test",
+    Identifiers = peptide_data$Protein
+)
 ```
 
-# Detailed Major Steps
+# Accessory Functions
 
-The ProteoMatch packages offers stand-alone functions, so users can have a greater
-control over the processing of their data.
+The IsoMatchMS package offers several stand-alone functions, including the ability
+to extract ProForma strings from mzid files `pull_modifications_from_mzid()`,
+converting several protein annotations to ProForma with `create_proforma()`, and
+summing ms1 spectra with `sum_ms1_spectra()`. All other capabilities support the 
+main IsoMatchMS function. These accessory functions were built to assist users 
+in formatting their data appropriately to run the main IsoMatchMS pipeline. 
 
-## Settings File Parameters
+## Generating ProForma Strings
 
-The ProteoMatch package requires a "Settings" file in the format of on .xlsx. Some examples
-of this format are provided `inst/extdata` directory. The example files show the required
-parameters, suggestions for how often they will need to be changed between runs, and 
-a decription of the parameter. We'll take a look at the example here.
-
-```{r}
-SettingsFile <- readxl::read_excel("../inst/extdata/Intact_Protein_Defaults.xlsx")
-knitr::kable(SettingsFile)
-```
-
-
-## Summing MS1 Spectra
-
-ProteoMatch has the ability to sum the spectra contained in the .mzML file before 
-running the analysis. This can be achieved using the `sum_ms1_spectra()` 
-function. Here an example is shwon with test data built in to the pspector package.
-
-```{r, eval=FALSE}
-# Create a temporary directory and copy example data there
-tmpdir <- tempdir()
-
-#Downloading test data
-file <- "https://raw.githubusercontent.com/EMSL-Computing/pspector/master/pspector_container/TestFiles/BottomUp/BottomUp.mzML"
-download.file(file, file.path(tmpdir, tail(unlist(strsplit(file, "/")), 1)))
-
-#Summing the spectra
-SummedSpec <- sum_ms1_spectra(mzMLPath = "../inst/extdata/BottomUp.mzML", MinimumAbundance = 0.01)
-```
-
-## Creating a Peak_Data Object
-
-Once the optional step of summing the spectra has been completed, the psectorlib
-package can be used to create a peak_data object. This can be done with a .mzML file or 
-with two vectors with MZ and Intensity values.
-
-This is an example of reading in a summed mzML file. First, a scan_metadata object is created 
-using the `pspectorlib::get_scan_metadata` function. That output is then used in the 
-`pspectorlib::get_peak_data` function to create the peak_data object
-
-```{r, eval=FALSE}}
-#Getting the meta scan data
-scan_data <- pspectorlib::get_scan_metadata(MSPath = "../inst/extdata/Intact_Protein_Summed_MS1.mzML")
-
-#Creating the peakdata object
-peak_data <- pspectorlib::get_peak_data(ScanMetadata = scan_data, ScanNumber = 1, MinAbundance = 0)
-```
-
-In this example,MZ and Intensity data are read in from a .csv, and the vectors
-in the dataframe are fed into `pspectorlib::make_peak_data` in order to make the peak_data object.
-
-```{r, eval=FALSE}}
-#Reading in .csv
-pd_df <- read.csv("../inst/extdata/Peptides_PeakData.csv")
-
-#Making the peak_data object
-peak_data <- pspectorlib::make_peak_data(MZ = pd_df$M.Z, Intensity = pd_df$Intensity)
-```
-
-## ProForma Strings
-
-ProteoMatch requires the ProForma string format, or that molecular formulas are already 
-calculated. This format is currently only produced by the TopPIC package. However, if the data contains 
+IsoMatchMS requires either molecular formulas or the ProForma string format, which
+is the default format from TopPIC. However, if the data contains 
 output from MSPathFinder, ProSight, or pTop instead, the `create_proforma()` function 
-can be used to convert to the ProForma Format. Proteomatch can also derive ProForma strings
+can be used to convert various peptide/protein/proteoform annotations to the 
+ProForma Format. IsoMatchMS can also derive ProForma strings
 from an .mzid file by using the `pull_modifications_from_mzid` function.
-
-### .mzid file
-
-This example shows us downloading an example .mzid file, then using the `pull_modifications_from_mzid` 
-function to create a dataframe of scan numbers, proforma strings, and protein names
-
-```{r, eval=FALSE}}
-# Create a temporary directory and copy example data there
-tmpdir <- tempdir()
-
-file <- "https://raw.githubusercontent.com/EMSL-Computing/pspector/master/pspector_container/TestFiles/BottomUp/BottomUp.mzid"
-download.file(file, file.path(tmpdir, tail(unlist(strsplit(file, "/")), 1)))
-
-mod_bu <- pull_modifications_from_mzid("../inst/extdata/BottomUp.mzid")
-```
 
 ### MSPathFinder, ProSight, and pTop
 
 The following examples show how to use the `create_proforma` function on data from 
-the MSPathFinder, ProSight, and pTop. These packages output protein sequences and 
-modifications in different format from then that of ProForma. Therefore, this function
-is provided to adjust their formatting to match ProForma.
+the MSPathFinder, ProSight, and pTop. 
 
 ```{r}
 # MSPathFinder example with scan and protein
@@ -201,9 +131,7 @@ create_proforma(
    Scan = c(3334, 3336, 3338),
    Protein = c("Protein33", "Protein45", "Protein47")
 )
-```
 
-```{r}
 # ProSight example without scan and protein
 create_proforma(
    Sequence = c("(49)M(37)SGRGKQG", "SG(67)RGKQGGKARAKAKSRSSRAG", "TEST"),
@@ -212,9 +140,7 @@ create_proforma(
    ConversionList = list("N-acetyl-L-methionine" = "Acetyl", "O-phospho-L-serine" = "Phospho", 
                          "omega-N,omega-N'-dimethyl-L-arginine" = "DiMethyl")
 )
-```
 
-```{r}
 # pTop Example
 create_proforma(
    Sequence = c("SGRGKGGKGLGKGGAKRHRKVLRDNIQGITKPAIRRL", "TEST", "PEPSRSTPAPKKGSKKAITKAQKKDGKKRKRGRKESYSIYV"),
@@ -223,117 +149,191 @@ create_proforma(
 )
 ```
 
+### .mzid file
 
+Here, we download an example .mzid file, then use the `pull_modifications_from_mzid` 
+function to create a dataframe of scan numbers, proforma strings, and protein names.
+
+```{r, eval=FALSE}
+# Create a temporary directory 
+tmpdir <- tempdir()
+
+# Copy example data to temporary directory
+file <- "https://raw.githubusercontent.com/EMSL-Computing/pspecter/master/pspecter_container/TestFiles/BottomUp/BottomUp.mzid"
+download.file(file, file.path(tmpdir, tail(unlist(strsplit(file, "/")), 1)))
+
+# Pull ProForma string from an mzid file 
+mod_bu <- pull_modifications_from_mzid(file.path(tmpdir, "BottomUp.mzid"))
+```
+
+## Summing MS1 Spectra
+
+IsoMatchMS has the ability to sum the spectra contained in the .mzML file before 
+running the main pipeline function with `sum_ms1_spectra()`. 
+
+```{r, eval=FALSE}
+# Create a temporary directory and copy example data there
+tmpdir <- tempdir()
+
+# Download the test data
+file <- "https://raw.githubusercontent.com/EMSL-Computing/pspecter/master/pspecter_container/TestFiles/BottomUp/BottomUp.mzML"
+download.file(file, file.path(tmpdir, tail(unlist(strsplit(file, "/")), 1)))
+
+# Summing the spectra
+SummedSpec <- sum_ms1_spectra(mzMLPath = file.path(tmpdir, "BottomUp.mzML"), MinimumAbundance = 0.01)
+```
+
+# Main Pipeline Functions
+
+## Settings File Parameters
+
+The ProteoMatch package requires a "Settings" file in the format of on .xlsx. Some examples
+of this format are provided `inst/extdata` directory. The example files show the required
+parameters, suggestions for how often they will need to be changed between runs, and 
+a description of the parameter. We'll take a look at the example here.
+
+```{r}
+SettingsFile <- xlsx::read.xlsx(system.file("extdata", "Intact_Protein_Defaults.xlsx", package = "IsoMatchMS"), 1)
+knitr::kable(SettingsFile)
+```
+
+## Creating a Peak_Data Object
+
+Once the optional step of summing the spectra has been completed, the pspecterlib
+package can be used to create a peak_data object. This can be done with a .mzML file or 
+with two vectors with MZ and Intensity values.
+
+This is an example of reading in a summed mzML file. First, a scan_metadata object is created 
+using the `pspecterlib::get_scan_metadata` function. That output is then used in the 
+`pspecterlib::get_peak_data` function to create the peak_data object
+
+```{r, eval=FALSE}
+# Extract the scan metadata
+scan_data <- pspecterlib::get_scan_metadata(
+  MSPath = system.file("extdata", "Intact_Protein_Summed_MS1.mzML", package = "IsoMatchMS")
+)
+
+# Create the peak_data object
+peak_data <- pspecterlib::get_peak_data(
+  ScanMetadata = scan_data, 
+  ScanNumber = 1, 
+  MinAbundance = 0
+)
+```
+
+In this example, MZ and Intensity data are read in from a .csv, and the vectors
+in the data.frame are fed into `pspecterlib::make_peak_data` in order to make the peak_data object.
+
+```{r, eval=FALSE}
+#Reading in .csv
+pd_df <- read.csv(system.file("extdata", "Peptides_PeakData.csv", package = "IsoMatchMS"))
+
+#Making the peak_data object
+peak_data <- pspecterlib::make_peak_data(
+  MZ = pd_df$M.Z, 
+  Intensity = pd_df$Intensity
+)
+```
 
 ## Molecular Formulas
 
 This step, as for the remainder of the functions outlined in the remainder of this 
 vignette, are wrapped in the `run_proteomatch` function. Return to section 1 to see 
-examples of that function being ran. 
+examples of running this function.
 
 Regardless of the data containing molecular formulas or ProForma strings, the `calculate_molform()` 
-function is used to create a ProteoMatch_MolForm class object. If ProForma strings 
-are input into the function, the molecular formulas are calculated. Regardless of format, 
-the ProteoMatch_MolForm object will be a data.table with 8 columns: Molecular Formula, 
-Mass Shift, Monoisotopic Mass, Most Abundant Isotopt, Protein, Charge, and Proteoform. 
-All of these values are calculated from the Proteoform string. First, sequences are 
-trimmed to values between the first and second period. Values in parenthesis are ignored, 
+function is used to create a IsoMatchMS_MolForm class object. If ProForma strings 
+are the input for this function, the molecular formulas are calculated. Regardless of format, 
+the IsoMatchMS_MolForm object will be a data.table with 8 columns: Biomolecules, 
+Identifiers, Adducts, Charges, Molecular Formulas, Mass Shifts, Monoisotopic Masses, and
+Most Abundant Isotopes. 
+
+All of these values are calculated from a combination of the ProForma strings or molecular formulas,
+charges, and adducts. If ProForma sequences are provided, they are  trimmed to 
+values between the first and second period. Parenthesis are removed,  
 and values within square brackets are extracted as post-translation modifications (PTMs). 
-String PTMs are matched to a back-end database to extract PTM molecular formulas. 
-Numerics are summed together as a mass shift. If a charge value is provided, the masses 
-are all divided by the charge, accounting for ProtonMasses, which is 1.00727647 AMUs 
-by default.
+Molecular formulas, mass shifts, adducts, and charges are all tracked in this dataframe. 
 
 Here an example is shown using peptides dataset, which contains Profroma strings.
 
 ```{r}
-#Reading in the Protein data
-Protein_data <- read.csv("../inst/extdata/Peptides_List.csv")
-
-# Let's calculate the molecular formula for a large proteoform
+# Run two examples with two charge states
 MolForm <- calculate_molform(
-  Modifications = Protein_data$Proteoform,
-  ModType = "ProForma",
-  Protein = Protein_data$Protein,
-  Charge = 2,
+   Biomolecules = c("M.SS[Methyl]S.V", "M.S[Methyl]S[22]S[23].V"),
+   BioType = "ProForma",
+   Charge = 1:2
 )
 
-# For display purpose, let's show the results without the proteoform
 MolForm %>% knitr::kable()
 ```
 
-To access the PTM database, use: 
+To access the current modifications database, use: 
 
 ```{r, eval=FALSE}
 # Load backend glossary
 Glossary <- data.table::fread(
-  system.file("extdata", "Unimod_v20220602.csv", package = "pspectorlib")
+  system.file("extdata", "Unimod_v20220602.csv", package = "pspecterlib")
 )
+
+Glossary %>% 
+  head() %>% 
+  dplyr::select(Modification, `Mass Change`, Residues, H, C, O, N, S) %>% 
+  knitr::kable()
 ```
 
-This file will need to be modified to search for PTMs that are not found in the
-[Unimod database](https://www.unimod.org/modifications_list.php?).
+Report new modifications to be added to the pspecterlib github issues page. 
 
 ## Filter Peaks 
 
 The `filter_peaks()` function allows users to focus their visualization on a particular 
 range of M/Z values, as well as filter out noise present in their data, which will 
-improve the identification process. Larger fragment data (like top-down proteomic data) 
+improve and speed up the identification process. Larger fragment data (like top-down proteomic data) 
 should have a higher noise filter than small fragment data (bottom-up), since there 
 are many lowly abundant peaks with high-intact data. 
 
 The abundance values are percentages of each peak's height compared to the largest
 peak. If we set a noise filter at 5, if will remove any peaks with any abundance
-less than 5. As a general rule, if too many peaks are matched, try upping the Noise 
-Filter, and if too little, try a smaller Noise Filter. 
-
-To determine a reasonable *M/Z* range, a peak_data object is read in and plotted:
-
-```{r}
-peak_data <- readRDS("../inst/extdata/Peptides_PeakData.RDS")
-
-ggplot(peak_data, aes(x = `M/Z`, y = Abundance)) + geom_line() + theme_bw()
-```
-
-After looking at the graph, an appropriate range of MZ values can be determined more
-easily and a noise filter can be selected:
-
-```{r}
-FilteredPeaks <- filter_peaks(
-  PeakData = PeakData, 
-  MZRange = c(5650, 5660), # Range of MZ values to filter down to
-  NoiseFilter = 2 # Minimum abundance to filter
-)
-
-FilteredPeaks %>% knitr::kable()
-```
+less than 5% of the highest intensity. As a general rule, if too many peaks are matched, 
+try upping the noise filter, and if too little, try a smaller noise filter. 
 
 ## 3. Match Proteoform to MS1
 
 Now, we pass the peak_data object (does not need to be filtered) and the molecular formula
 data.table (ProteoMatch_MolForm) to the proteoform matching function. See 
-`?match_proteoform_to_ms1` for a more detailed explanation of the parameters. 
-
+`?match_biomolecule_to_ms1` for a more detailed explanation of the parameters. 
 
 ```{r}
-Matches <- match_proteoform_to_ms1(
-  PeakData = FilteredPeaks,
-  MolecularFormulas = ProForma,
-  IsotopicPercentage = 2, # Set to the same relative abundance as the Noise Filter
-  PPMThreshold = 5, # 10 is a very generous value and is generally reserved for bottom-up
-  MinAbundanceChange = 0.1, # The minimum abundance change between peaks. 
-  IsotopeRange = c(5, 20) # The minimum and maximum number of isotopes to calculate and match
+# Run two examples with two charge states
+MolForms_Test <- calculate_molform(
+   Biomolecules = c("M.SS[Methyl]S.V", "M.SS[6]S[7].V"),
+   BioType = "ProForma", 
+   Identifiers = c("Test1", "Test2"),
+   Charge = 1:2
 )
 
-Matches[,c(1:15, 17:19)] %>% knitr::kable()
+# Generate some experimental peak data to match
+PeakData <- pspecterlib::make_peak_data(
+  MZ = c(147.5684, 148.0699, 148.5708, 149.0721, 149.5731,
+         294.1296, 295.1325, 296.1343, 297.1369, 298.1390),
+  Intensity = c(868.3680036, 110.9431876, 18.7179196, 1.7871629, 0.1701294,
+                868.3680036, 110.9431876, 18.7179196, 1.7871629, 0.1701294)
+)
+# Run algorithm
+Matches <- match_biomolecule_to_ms1(
+   PeakData = PeakData,
+   MolecularFormula = MolForms_Test,
+   MatchingAlgorithm = "closest peak",
+   IsotopeRange = c(3,20)
+)
+
+Matches %>% knitr::kable()
 ```
 
-Each match is generated with a unique ID for plotting purposes. Notice that we have
-three metrics of peak match quality: Absolute Relative Error, Pearson Correlation,
-and Figure of Merit. Details about Pearson Correlation can be found with `?stats::cor`.
+Each match is generated with a unique ID for plotting purposes. We have
+three metrics of peak match quality: Absolute Relative Error, Cosine Correlation,
+and a Figure of Merit. 
 
 The equation for Absolute Relative Error is: 
-
 
 $$
 \frac{1}{n}*\sum{\frac{|A_R - A_E|}{A_R}}
@@ -350,33 +350,28 @@ $$
 where n is the number of peaks matched, $A_R$ is the reference abundance, $A_E$
 is the experimental abundance, and $NF$ is the noise filter set by the user. 
 
-
 ## Plot Results 
 
 If there is only one match generated, the results can be easily visualized with
-`plot_Ms1Match`. 
+`plot_Ms1Match`. There are many plotting options that can be explored with `?plot_Ms1Match`
 
 ```{r}
 plot_Ms1Match(
-  PeakData = FilteredPeaks,
+  PeakData = PeakData,
   Ms1Match = Matches, 
   ID = 1 # Pull whatever match you're interested in plotting
 )
 ```
 
-Large fragment data will have many isotopes to match, and the monoisotopic peak
-(gray line) will likely not have a match associated with it. The red dots are 
-indicative of the reference peak values, and the black lines are the experimental peaks.
-
 If there are multiple peaks, users can build a [trelliscope](https://github.com/hafen/trelliscopejs) 
 display with `proteomatch_trelliscope`. 
 
-```{r}
-proteomatch_trelliscope(
-  PeakData = FilteredPeaks,
-  Ms1Match = Matches
+```{r, eval = FALSE}
+isomatchms_trelliscope(
+  PeakData = PeakData,
+  Ms1Match = Matches,
+  Path = "~/Downloads/TrelliTest"
 )
-# To download the trelliscope, use the "Path" parameter in this function to denote a destination for the download.
 ```
 
 

@@ -21,6 +21,15 @@
 #' @examples
 #' \dontrun{
 #' 
+#' # Create a temporary directory and copy example data there
+#' tmpdir <- tempdir()
+#'
+#' # Download the test data
+#' file <- "https://raw.githubusercontent.com/EMSL-Computing/pspecter/master/pspecter_container/TestFiles/BottomUp/BottomUp.mzML"
+#' download.file(file, file.path(tmpdir, tail(unlist(strsplit(file, "/")), 1)))
+#' 
+#' # Summing the spectra
+#' SummedSpec <- sum_ms1_spectra(mzMLPath = file.path(tmpdir, "BottomUp.mzML"), MinimumAbundance = 0.01)
 #' 
 #' }
 #' @export
@@ -98,7 +107,6 @@ sum_ms1_spectra <- function(mzMLPath,
     charge <- unlist(header[header$`Scan Number` == MS1, "Precursor Charge"])
     peakData <- pspecterlib::get_peak_data(header, MS1, MinAbundance = 0)
     class(peakData) <- c("data.table", "data.frame")
-    browser()
     peakData <- peakData %>% 
       dplyr::mutate(
         `M/Z` = (`M/Z` + (charge * 1.00727647)) * charge,

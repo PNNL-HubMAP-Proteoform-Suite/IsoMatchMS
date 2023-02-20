@@ -38,6 +38,15 @@ less than 0.01 are tossed.
 \examples{
 \dontrun{
 
+# Create a temporary directory and copy example data there
+tmpdir <- tempdir()
+
+# Download the test data
+file <- "https://raw.githubusercontent.com/EMSL-Computing/pspecter/master/pspecter_container/TestFiles/BottomUp/BottomUp.mzML"
+download.file(file, file.path(tmpdir, tail(unlist(strsplit(file, "/")), 1)))
+
+# Summing the spectra
+SummedSpec <- sum_ms1_spectra(mzMLPath = file.path(tmpdir, "BottomUp.mzML"), MinimumAbundance = 0.01)
 
 }
 }

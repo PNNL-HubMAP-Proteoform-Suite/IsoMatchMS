@@ -81,7 +81,13 @@ Documentation for example glycan data can be found \href{https://google.com}{her
 ## SHORT EXAMPLES ##
 ####################
 
-ToDo
+## INTACT PROTEOMICS EXAMPLE ##
+
+protein_data <- read.csv(system.file("extdata", "Intact_Proteins_List_Short.csv", package = "IsoMatchMS"))
+peak_data <- readRDS(system.file("extdata", "Intact_PeakData.RDS", package = "IsoMatchMS"))
+
+
+## DIGESTED PROTEOMICS EXAMPLE ##
 
 ###################
 ## FULL EXAMPLES ##
