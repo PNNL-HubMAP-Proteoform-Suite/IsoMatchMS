@@ -19,11 +19,11 @@
 #'    the plots are generated with the plot_Ms1Match function, and the cognostics
 #'    are: Identifiers, Absolute Relative Error, Correlation, Charge, Biomolecules, and ID.
 #'
-#' @param PeakData A pspecterlib peak_data object or data.table with "M/Z" and "Intensity". Required.
-#' @param Ms1Match A IsoMatchMS_MatchedPeaks class object from match_full_seq_ms1. Required.
-#' @param Path The base directory of the trelliscope application. Default is Downloads/Ms1Match.
-#' @param MinCorrelationScore The minimum correlation score to plot. Default is 0.7.
-#' @param Window The -/+ m/z value on either side of the matched spectra plot. Default is 2 m/z.
+#' @param PeakData (peak_data object) A pspecterlib or data.table with "M/Z" and "Intensity". Required.
+#' @param Ms1Match (IsoMatchMS_MatchedPeaks object) object from match_full_seq_ms1. Required.
+#' @param Path (character) The base directory of the trelliscope application. Default is Downloads/Ms1Match.
+#' @param MinCorrelationScore (numeric) The minimum correlation score to plot. Default is 0.7.
+#' @param Window (numeric) The -/+ m/z value on either side of the matched spectra plot. Default is 2 m/z.
 #'
 #' @returns An html trelliscope display
 #'
@@ -122,7 +122,7 @@ isomatchms_trelliscope <- function(PeakData,
       `Peaks Matched` = length(`M/Z`)
     ) %>%
     dplyr::ungroup()
-  
+
   # Generate trelliscope display
   IsoMatchMSTrelli %>%
     dplyr::select(RelCol) %>%

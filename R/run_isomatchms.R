@@ -2,123 +2,123 @@
 #'
 #' @description A wrapper for quickly running all the steps of the IsoMatchMS pipeline
 #'
-#' @param Biomolecules A vector of Molecular Formulas or ProForma strings (i.e. "M.AA[Acetyl⁠]⁠AA[3.2⁠]⁠.V").
-#'    ProForma strings can be pulled from mzid files (MS-GF+, MSPathFinder) with pull_modifications_from_mzid, 
-#'    or made with create_proforma for MSPathFinder, ProSight, and pTop modifications. TopPIC proteoforms 
+#' @param Biomolecules (character) A vector of Molecular Formulas or ProForma strings (i.e. "M.AA[Acetyl⁠]⁠AA[3.2⁠]⁠.V").
+#'    ProForma strings can be pulled from mzid files (MS-GF+, MSPathFinder) with pull_modifications_from_mzid,
+#'    or made with create_proforma for MSPathFinder, ProSight, and pTop modifications. TopPIC proteoforms
 #'    are provided as ProForma strings. Required.
-#' @param BioType A string indicating whether the Biomolecules are "ProForma" strings or "Molecular Formula". Required. 
-#' @param SummedSpectra A pspecterlib peak_data object of all summed MS1 spectra. This
+#' @param BioType (character) A string indicating whether the Biomolecules are "ProForma" strings or "Molecular Formula". Required.
+#' @param SummedSpectra (peak_data object)A pspecterlib peak_data object of all summed MS1 spectra. This
 #'    can be generated with an mzML file and the sum_ms1_spectra function, pulled from
-#'    a summed mzML with pspecterlib::get_peak_data, or simply created with 
-#'    pspecterlib::make_peak_data. Required.  
-#' @param SettingsFile Path to a xlsx file with all user-set parameters. For examples, 
-#'    try xlsx::read.xlsx(system.file("extdata", "Intact_Protein_Defaults.xlsx", package = "IsoMatchMS"), 1). 
+#'    a summed mzML with pspecterlib::get_peak_data, or simply created with
+#'    pspecterlib::make_peak_data. Required.
+#' @param SettingsFile (character) Path to a xlsx file with all user-set parameters. For examples,
+#'    try xlsx::read.xlsx(system.file("extdata", "Intact_Protein_Defaults.xlsx", package = "IsoMatchMS"), 1).
 #'    Required.
-#' @param Path The base directory of the output trelliscope application. Default is Downloads/Ms1Match.
-#' @param Identifiers A vector of identifiers for each biomolecule (i.e. protein, glycan, etc.). Optional.
-#' @param Messages A TRUE/FALSE indicating whether messages should be printed. 
+#' @param Path (character) The base directory of the output trelliscope application. Default is Downloads/Ms1Match.
+#' @param Identifiers (character) A vector of identifiers for each biomolecule (i.e. protein, glycan, etc.). Optional.
+#' @param Messages (boolean) A TRUE/FALSE indicating whether messages should be printed.
 #'
 #' @details Before running the main algorithm, you will need Molecular Formulas (or ProForma strings)
 #' and a summed spectra. There are several ways to get ProForma strings, including
 #' pull_modifications_from_mzid and create_proforma. Spectra may be summed with sum_ms1_spectra,
 #' or uploaded from an mzML (see pspecterlib::get_scan_metadata and pspecterlib::get_peak_data) or
-#' created from a csv (see pspecterlib::make_peak_data). 
-#' 
+#' created from a csv (see pspecterlib::make_peak_data).
+#'
 #' The algorithm is run in 4 main steps:
 #' 1. Molecular Formulas and masses are calculated with calculate_molform
 #' 2. Input summed spectra are filtered with filter_peaks
 #' 3. Isotopic distributions are calculated with the molecular formulas, and matched
 #'     to the filtered spectra
 #' 4. All high scoring matches are visualized with a trelliscope display
-#' 
+#'
 #' Documentation for example intact proteomic data can be found [here](https://www.sciencedirect.com/science/article/pii/S1535947622002997)
-#' 
+#'
 #' Documentation for example digested proteomic data can be found [here](https://google.com)
-#' 
+#'
 #' Documentation for example glycan data can be found [here](https://google.com)
-#' 
-#' @returns 
+#'
+#' @returns
 #' \tabular{ll}{
 #' MolecularFormulas \tab A CSV with all calculated molecular formulas from the ProForma strings. \cr
 #' \tab \cr
-#' FilteredPeaks \tab A CSV with the final spectrum used after filtering \cr 
+#' FilteredPeaks \tab A CSV with the final spectrum used after filtering \cr
 #' \tab \cr
-#' Matched_Isotope_Distributions \tab A CSV with all matched isotope distributions, regardless of quality \cr 
+#' Matched_Isotope_Distributions \tab A CSV with all matched isotope distributions, regardless of quality \cr
 #' \tab \cr
 #' Trelliscope_Display \tab Visualization of all matched isotope distributions above the quality threshold \cr
 #' \tab \cr
 #' }
-#' 
-#' @examples 
+#'
+#' @examples
 #' \dontrun{
-#' 
+#'
 #' ####################
 #' ## SHORT EXAMPLES ##
 #' ####################
-#' 
+#'
 #' ## INTACT PROTEOMICS EXAMPLE ##
-#' 
+#'
 #' protein_data <- read.csv(system.file("extdata", "Intact_Proteins_List_Short.csv", package = "IsoMatchMS"))
 #' peak_data <- readRDS(system.file("extdata", "Intact_PeakData.RDS", package = "IsoMatchMS"))
-#' 
-#' 
+#'
+#'
 #' ## DIGESTED PROTEOMICS EXAMPLE ##
-#' 
+#'
 #' ###################
 #' ## FULL EXAMPLES ##
 #' ###################
-#' 
+#'
 #' ## INTACT PROTEOMICS EXAMPLE ##
-#' 
+#'
 #' # Extract the summed peak data with any tool (here, pspecterlib, which uses mzR)
 #' MSPath <- system.file("extdata", "Intact_Protein_Summed_MS1.mzML", package = "IsoMatchMS")
 #' ScanMetadata <- pspecterlib::get_scan_metadata(MSPath)
 #' PeakData <- pspecterlib::get_peak_data(ScanMetadata, ScanNumber = 1, MinAbundance = 0.1)
-#' 
+#'
 #' # Now, get the molecular formulas (required) and protein names (optional)
 #' ProteinData <- read.csv(system.file("extdata", "Intact_Proteins_List.csv", package = "IsoMatchMS"), header = T)
 #' Proteoform <- ProteinData$Proteoform
 #' ProteinNames <- ProteinData$Protein.accession
-#' 
+#'
 #' # Get the settings file path
 #' Intact_Settings_Path <- system.file("extdata", "Intact_Protein_Defaults.xlsx", package = "IsoMatchMS")
-#' 
-#' # Now, run the main pipeline 
+#'
+#' # Now, run the main pipeline
 #' run_isomatchms(
 #'     Biomolecule = Proteoform,
 #'     BioType = "ProForma",
-#'     SummedSpectra = PeakData, 
-#'     SettingsFile = Intact_Settings_Path, 
+#'     SummedSpectra = PeakData,
+#'     SettingsFile = Intact_Settings_Path,
 #'     Path = file.path(.getDownloadsFolder(), "Intact_Example"),
 #'     Identifiers = ProteinNames,
 #'     Messages = TRUE
 #' )
-#' 
+#'
 #' ## DIGESTED PROTEOMICS EXAMPLE ##
-#' 
+#'
 #' # Pull summed peak data from CSV
 #' Peaks <- read.csv(system.file("extdata", "Peptides_PeakData.csv", package = "IsoMatchMS"))
 #' PeakData <- pspecterlib::make_peak_data(MZ = Peaks$M.Z, Intensity = Peaks$Intensity)
-#' 
+#'
 #' # Now, get the molecular formulas (required) and protein names (optional)
 #' ProteinData <- read.csv(system.file("extdata", "Peptides_List.csv", package = "IsoMatchMS"))
 #' ProForma <- ProteinData$Proteoform
 #' ProteinNames <- ProteinData$Protein
-#' 
+#'
 #' # Get the settings file path
 #' Digested_Settings_Path <- system.file("extdata", "Peptides_Defaults.xlsx", package = "IsoMatchMS")
-#' 
-#' # Now, run the main pipeline 
+#'
+#' # Now, run the main pipeline
 #' run_isomatchms(
 #'     Biomolecule = ProForma,
 #'     BioType = "ProForma",
-#'     SummedSpectra = PeakData, 
-#'     SettingsFile = Digested_Settings_Path, 
+#'     SummedSpectra = PeakData,
+#'     SettingsFile = Digested_Settings_Path,
 #'     Path = file.path(.getDownloadsFolder(), "Digested_Example"),
 #'     Identifiers = ProteinNames,
 #'     Messages = TRUE
 #' )
-#' 
+#'
 #' }
 #'
 #' @export
@@ -133,9 +133,9 @@ run_isomatchms <- function(Biomolecules,
   ##################
   ## CHECK INPUTS ##
   ##################
-  
+
   # Modifications, ModType, and Proteins are checked by the calculate_molform function
-  
+
   # SummedSpectra are checked in the filter_peaks function
 
   # The settings file should have be an xlsx
@@ -146,12 +146,12 @@ run_isomatchms <- function(Biomolecules,
 
   # The settings file should have all the required parameters
   RequiredRow <- c("MZRange", "NoiseFilter", "Charges", "MatchingAlgorithm", "MinimumAbundance", "CorrelationMinimum",
-    "PPMThreshold", "AddMAI", "IsotopeRange", "PlottingWindow", "ProtonMass")
+    "PPMThreshold", "AddMAI", "IsotopeRange", "PlottingWindow", "AdductLabels", "AdductMasses")
   if (!all(Settings$Parameter %in% RequiredRow)) {
     stop("Settings file is missing: ",
          paste0(RequiredRow[!RequiredRow  %in% Settings$Parameter], ", ", collapse = ""))
   }
-  
+
   # Messages should be a TRUE or FALSE
   if (!is.logical(Messages) && (Messages != TRUE | Messages != FALSE)) {
     stop("Messages should be a TRUE or FALSE.")
@@ -163,16 +163,20 @@ run_isomatchms <- function(Biomolecules,
 
   # 0. Create output directory
   if (!dir.exists(Path)) {dir.create(Path)}
-  
+
   # 1. Calculate Molecular Formula
   if (Messages) {message("Calculating molecular formulas...")}
+
+  AdductMasses <- Settings[Settings$Parameter == "AdductMasses", "Default"] %>% stringr::str_split(",") %>% as.numeric() %>% as.list()
+  names(AdductMasses) <- Settings[Settings$Parameter == "AdductLabels", "Default"] %>% stringr::str_split(",")
+
   MolForm <- calculate_molform(
     Biomolecules = Biomolecules,
-    BioType = BioType, 
+    BioType = BioType,
     Identifiers = Identifiers,
     Charge = Settings[Settings$Parameter == "Charges", "Default"] %>% strsplit(",") %>% unlist() %>% as.numeric(),
     AddMostAbundantIsotope = Settings[Settings$Parameter == "AddMAI", "Default"] %>% unlist() %>% as.logical(),
-    AdductMasses = Settings[Settings$Parameter == "ProtonMass", "Default"] %>% as.numeric()
+    AdductMasses = AdductMasses
   )
   write.csv(MolForm, file.path(Path, "Molecular_Formulas.csv"), row.names = F, quote = F)
 
@@ -184,7 +188,7 @@ run_isomatchms <- function(Biomolecules,
     NoiseFilter = Settings[Settings$Parameter == "NoiseFilter", "Default"] %>% as.numeric()
   )
   write.csv(FilteredData, file.path(Path, "Filtered_Peaks.csv"), row.names = F, quote = F)
-  
+
   # 3. Match Peaks
   if (Messages) {message("Matching spectra...")}
   MatchedPeaks <- match_biomolecule_to_ms1(
@@ -193,8 +197,7 @@ run_isomatchms <- function(Biomolecules,
     MatchingAlgorithm = Settings[Settings$Parameter == "MatchingAlgorithm", "Default"] %>% unlist(),
     MinAbundance = Settings[Settings$Parameter == "MinimumAbundance", "Default"] %>% unlist() %>% as.numeric(),
     PPMThreshold = Settings[Settings$Parameter == "PPMThreshold", "Default"] %>% as.numeric(),
-    IsotopeRange = Settings[Settings$Parameter == "IsotopeRange", "Default"] %>% strsplit(",") %>% unlist() %>% as.numeric(),
-    ProtonMass = Settings[Settings$Parameter == "ProtonMass", "Default"] %>% as.numeric()
+    IsotopeRange = Settings[Settings$Parameter == "IsotopeRange", "Default"] %>% strsplit(",") %>% unlist() %>% as.numeric()
   )
   if (is.null(MatchedPeaks)) {
     write.csv("No matches found", file.path(Path, "Matched_Isotope_Distributions.csv"), row.names = F, quote = F)
