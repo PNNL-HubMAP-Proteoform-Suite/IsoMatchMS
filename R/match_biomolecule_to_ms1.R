@@ -4,20 +4,20 @@
 #'     have matched to the isotope profile. This object can be passed to downstream
 #'     plotting functions.
 #'
-#' @param PeakData A pspecterlib peak_data object made with "make_peak_data" or
+#' @param PeakData (peak_data object) from pspecterlib, made with "make_peak_data" or
 #'     extracted from a raw or mzML file with "get_peak_data." Use of centroided data
 #'     is recommended, but not required.
-#' @param MolecularFormulas A "IsoMatchMS_MolForm" object with Molecular Formulas,
+#' @param MolecularFormulas (IsoMatchMS_MolForm object) object with Molecular Formulas,
 #'     Mass Shifts, and Charges.
-#' @param MatchingAlgorithm Either "closest peak" or "highest abundance" where the "closest
+#' @param MatchingAlgorithm (character) Either "closest peak" or "highest abundance" where the "closest
 #'    peak" implementation chooses the peak closest to the true M/Z value within the PPM window
 #'    and "highest abundance" chooses the highest intensity peak within the PPM window. "closest peak"
-#'    is recommended for peaks that have been peak picked with an external tool, 
-#'    and "highest abundance" is recommended for noisy datasets or those with many peaks. 
-#' @param MinAbundance The minimum abundance (calculated intensity) permitted
+#'    is recommended for peaks that have been peak picked with an external tool,
+#'    and "highest abundance" is recommended for noisy datasets or those with many peaks.
+#' @param MinAbundance (numeric) The minimum abundance (calculated intensity) permitted
 #'     to be matched. Default is 0.1, which is 0.1%.
-#' @param PPMThreshold The window in PPM to search for peaks around the true peak. Required. Default is 10 ppm.
-#' @param IsotopeRange The minimum and maximum number of isotopes to consider. Default is c(3,20).
+#' @param PPMThreshold (numeric) The window in PPM to search for peaks around the true peak. Required. Default is 10 ppm.
+#' @param IsotopeRange (numeric) The minimum and maximum number of isotopes to consider. Default is c(3,20).
 #'
 #' @details
 #' The data.table outputted by this function contains 12 columns
@@ -51,13 +51,13 @@
 #' ID \tab A unique ID for each Proteoform, Protein, and Charge combination used in plotting functions \cr
 #' \tab \cr
 #' }
-#' 
+#'
 #' @importFrom foreach %dopar% foreach
-#' 
-#' @returns A IsoMatchMS_MatchedPeaks object, which is a data.table containing the
+#'
+#' @returns (IsoMatchMS_MatchedPeaks object) A IsoMatchMS_MatchedPeaks object, which is a data.table containing the
 #'     Identifier, Adduct, M/Z, Intensity, Isotope, M/Z Search Window, Experimental M/Z,
 #'     Experimental Intensity, PPM Error, Absolute Relative Error, Correlation,
-#'     Charge, Biomolecule, and an ID. 
+#'     Charge, Biomolecule, and an ID.
 #'
 #' @examples
 #' \dontrun{
@@ -65,7 +65,7 @@
 #' # Run two examples with two charge states
 #' MolForms_Test <- calculate_molform(
 #'    Biomolecules = c("M.SS[Methyl]S.V", "M.SS[6]S[7].V"),
-#'    BioType = "ProForma", 
+#'    BioType = "ProForma",
 #'    Identifiers = c("Test1", "Test2"),
 #'    Charge = 1:2
 #' )
@@ -89,11 +89,10 @@
 #' @export
 match_biomolecule_to_ms1 <- function(PeakData,
                                     MolecularFormulas,
-                                    MatchingAlgorithm, 
+                                    MatchingAlgorithm,
                                     MinAbundance = 0.1,
                                     PPMThreshold = 10,
-                                    IsotopeRange = c(5, 20),
-                                    ProtonMass = 1.00727647) {
+                                    IsotopeRange = c(5, 20)) {
 
   ##################
   ## CHECK INPUTS ##
@@ -135,32 +134,33 @@ match_biomolecule_to_ms1 <- function(PeakData,
   .match_proteoform_to_ms1_iterator <- function(MonoMass,
                                                 MolForm,
                                                 Charge,
-                                                MassShift) {
+                                                MassShift,
+                                                AdductMass) {
 
     ########################
     ## CALCULATE ISOTOPES ##
     ########################
-    
+
     # Make sure that the PeakData overlaps with +10 the monoisotopic mass
     if (nrow(PeakData[PeakData$`M/Z` >= round(MonoMass) & PeakData$`M/Z` <= round(MonoMass)+10,]) == 0) {
       return(NULL)
     }
-    
+
     # Convert the molecular formula back to an atomic vector
     molform <- pspecterlib::as.molform(MolForm)
-    
-    # Get isotope profile (distribution). Match quality is determined by the limit function. 
+
+    # Get isotope profile (distribution). Match quality is determined by the limit function.
     IsoDist <- pspecterlib::calculate_iso_profile(molform, MinAbundance, limit = 0.001) %>%
       data.table::data.table() %>%
       dplyr::rename(`M/Z` = mass, Abundance = abundance, Isotope = isotope) %>%
       dplyr::select(-isolabel) %>%
-      dplyr::mutate(`M/Z` = (`M/Z` + (Charge * ProtonMass)) / Charge)
+      dplyr::mutate(`M/Z` = (`M/Z` + (Charge * AdductMass)) / Charge)
 
     # Add mass change if it is not NULL
     if (!is.null(MassShift) & MassShift != 0) {
       IsoDist$`M/Z` <- IsoDist$`M/Z` + (MassShift / Charge)
     }
-    
+
     # Save the original IsoDist object before applying matches and filtering
     OrigIsoDist <- IsoDist
 
@@ -170,33 +170,33 @@ match_biomolecule_to_ms1 <- function(PeakData,
 
     # Determine the theoretical mz tolerance
     IsoDist$`M/Z Search Window` <- IsoDist$`M/Z` * PPMThreshold / 1e6
-    
+
     if (MatchingAlgorithm == "closest peak") {
 
       # For each theoretical peak, find the closest index in ms, where ms = theoretical
       LeftIndex <- findInterval(IsoDist$`M/Z`, PeakData$`M/Z`, rightmost.closed = FALSE, all.inside = TRUE)
-  
+
       # Compute mz differences (absolute) to closest element to each side, smaller to the left and next greater to the right:
       IsoDist$`Left Difference` <- abs(PeakData$`M/Z`[LeftIndex] - IsoDist$`M/Z`)
       IsoDist$`Right Difference` <- abs(PeakData$`M/Z`[LeftIndex + 1] - IsoDist$`M/Z`)
       IsoDist$`Closest Index` <- LeftIndex
-  
+
       # Set closest index as right side one, if difference is smaller:
       RightIndexBest <- which(IsoDist$`Right Difference` < IsoDist$`Left Difference`)
       IsoDist$`Closest Index`[RightIndexBest] <- IsoDist$`Closest Index`[RightIndexBest] + 1
       IsoDist$`M/Z Difference` <- abs(PeakData$`M/Z`[IsoDist$`Closest Index`] - IsoDist$`M/Z`)
-  
+
       # Keep only matches within the tolerance
       IsoDist <- IsoDist[which(IsoDist$`M/Z Difference` < IsoDist$`M/Z Search Window`), ]
       IsoDist$`M/Z Experimental` <- PeakData$`M/Z`[IsoDist$`Closest Index`]
       IsoDist$`Intensity Experimental` <- PeakData$Intensity[IsoDist$`Closest Index`]
       IsoDist$`Abundance Experimental` <- PeakData$Abundance[IsoDist$`Closest Index`]
-  
+
       # Remove non-necessary rows moving forward
       IsoDist <- IsoDist %>% dplyr::select(-c(`Left Difference`, `Right Difference`, `Closest Index`, `M/Z Difference`))
-    
+
     } else if (MatchingAlgorithm == "highest abundance") {
-      
+
       IsoDist <- IsoDist %>%
         dplyr::mutate(
           MZLower = `M/Z` - `M/Z Search Window`,
@@ -216,12 +216,12 @@ match_biomolecule_to_ms1 <- function(PeakData,
           }) %>% unlist()
         ) %>%
         dplyr::select(-c(MZLower, MZUpper))
-      
+
     }
 
     # Calculate PPM Error
     IsoDist$`PPM Error` <- ((IsoDist$`M/Z Experimental` - IsoDist$`M/Z`) / IsoDist$`M/Z`) * 1e6
-    
+
     # Subset down to numbers that are within 1 place of each other
     CloseValues <- IsoDist %>%
       dplyr::select(Isotope) %>%
@@ -275,10 +275,10 @@ match_biomolecule_to_ms1 <- function(PeakData,
     if (nrow(IsoDist) >= min(IsotopeRange)) {
 
       # Generate an abundance match data.frame
-      AbundanceDF <- merge(OrigIsoDist[,c("M/Z", "Abundance")], IsoDist[,c("M/Z", "Abundance Experimental")], 
+      AbundanceDF <- merge(OrigIsoDist[,c("M/Z", "Abundance")], IsoDist[,c("M/Z", "Abundance Experimental")],
                            by = "M/Z", all.x = T)
       AbundanceDF$`Abundance Experimental`[is.na(AbundanceDF$`Abundance Experimental`)] <- 0
-      
+
       # Calculate Absolute Relative Error, Correlation, and Figure of merit
       IsoDist$`Absolute Relative Error` <- 1/nrow(AbundanceDF) * sum(abs(AbundanceDF$Abundance - AbundanceDF$`Abundance Experimental`) / AbundanceDF$Abundance)
       IsoDist$Correlation <- stats::cor(AbundanceDF$`Abundance Experimental`, AbundanceDF$Abundance, method = "pearson")
@@ -289,49 +289,51 @@ match_biomolecule_to_ms1 <- function(PeakData,
 
       # Generate an identifier
       IsoDist$ID <- uuid::UUIDgenerate()
-      
+
       # Add input columns
       IsoDist$`Monoisotopic Mass` <- MonoMass
       IsoDist$`Molecular Formula` <- MolForm
       IsoDist$Charge <- Charge
       IsoDist$`Mass Shift` <- MassShift
-    
+      IsoDist$AdductMasses <- AdductMass
+
       # Add missing columns and reorder
       return(IsoDist)
 
     } else {return(NULL)}
 
   }
-  
-  # Implement parallel computing for speed 
+
+  # Implement parallel computing for speed
   doParallel::registerDoParallel(parallel::detectCores())
-  
+
   # Iterate through and match molecular formula data. Remove NULLs and pull out the ID
   MolFormTable <- foreach(it = 1:nrow(MolecularFormulas), .combine = rbind) %dopar% {
     .match_proteoform_to_ms1_iterator(
       MonoMass = MolecularFormulas$`Monoisotopic Mass`[it],
       MolForm = MolecularFormulas$`Molecular Formula`[it],
       Charge = MolecularFormulas$Charge[it],
-      MassShift = MolecularFormulas$`Mass Shift`[it]
+      MassShift = MolecularFormulas$`Mass Shift`[it],
+      AdductMasses = MolecularFormulas$AdductMasses[it]
     )
   }
-  
+
   # If there is no MolFormTable, stop
   if (is.null(MolFormTable) || nrow(MolFormTable) == 0) {
     stop("No fragmentation patterns found. Try increasing the PPMThreshold, decreasing the minimum isotope range, lowering the noise filter, or lowering the minimum abundance.")
   }
-  
+
   # Subset matches
-  AllMatches <- merge(MolFormTable, MolecularFormulas, by = c("Monoisotopic Mass", "Mass Shift", "Molecular Formula", "Charge"), all.x = T) %>%
-    dplyr::mutate(ID = as.numeric(as.factor(ID))) 
-  
+  AllMatches <- merge(MolFormTable, MolecularFormulas, by = c("Monoisotopic Mass", "Mass Shift", "Molecular Formula", "Charge", "AdductMasses"), all.x = T) %>%
+    dplyr::mutate(ID = as.numeric(as.factor(ID)))
+
   AllMatches <- AllMatches %>%
     dplyr::select(
       Identifiers, `M/Z`, `Monoisotopic Mass`, Abundance, Isotope, `M/Z Search Window`, `M/Z Experimental`,
       `Intensity Experimental`, `Abundance Experimental`, `PPM Error`, `Absolute Relative Error`,
       Correlation, `Figure of Merit`, Charge, Biomolecules, `Molecular Formula`,
       `Most Abundant Isotope`, ID
-     ) %>% 
+     ) %>%
     unique()
 
   # If no matches, return NULL
