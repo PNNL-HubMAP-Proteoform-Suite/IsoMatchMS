@@ -15,27 +15,27 @@ run_isomatchms(
 )
 }
 \arguments{
-\item{Biomolecules}{A vector of Molecular Formulas or ProForma strings (i.e. "M.AA\link{Acetyl⁠}⁠AA\link{3.2⁠}⁠.V").
+\item{Biomolecules}{(character) A vector of Molecular Formulas or ProForma strings (i.e. "M.AA\link{Acetyl⁠}⁠AA\link{3.2⁠}⁠.V").
 ProForma strings can be pulled from mzid files (MS-GF+, MSPathFinder) with pull_modifications_from_mzid,
 or made with create_proforma for MSPathFinder, ProSight, and pTop modifications. TopPIC proteoforms
 are provided as ProForma strings. Required.}
 
-\item{BioType}{A string indicating whether the Biomolecules are "ProForma" strings or "Molecular Formula". Required.}
+\item{BioType}{(character) A string indicating whether the Biomolecules are "ProForma" strings or "Molecular Formula". Required.}
 
-\item{SummedSpectra}{A pspecterlib peak_data object of all summed MS1 spectra. This
+\item{SummedSpectra}{(peak_data object)A pspecterlib peak_data object of all summed MS1 spectra. This
 can be generated with an mzML file and the sum_ms1_spectra function, pulled from
 a summed mzML with pspecterlib::get_peak_data, or simply created with
 pspecterlib::make_peak_data. Required.}
 
-\item{SettingsFile}{Path to a xlsx file with all user-set parameters. For examples,
+\item{SettingsFile}{(character) Path to a xlsx file with all user-set parameters. For examples,
 try xlsx::read.xlsx(system.file("extdata", "Intact_Protein_Defaults.xlsx", package = "IsoMatchMS"), 1).
 Required.}
 
-\item{Path}{The base directory of the output trelliscope application. Default is Downloads/Ms1Match.}
+\item{Path}{(character) The base directory of the output trelliscope application. Default is Downloads/Ms1Match.}
 
-\item{Identifiers}{A vector of identifiers for each biomolecule (i.e. protein, glycan, etc.). Optional.}
+\item{Identifiers}{(character) A vector of identifiers for each biomolecule (i.e. protein, glycan, etc.). Optional.}
 
-\item{Messages}{A TRUE/FALSE indicating whether messages should be printed.}
+\item{Messages}{(boolean) A TRUE/FALSE indicating whether messages should be printed.}
 }
 \value{
 \tabular{ll}{
@@ -95,7 +95,7 @@ peak_data <- readRDS(system.file("extdata", "Intact_PeakData.RDS", package = "Is
 
 ## INTACT PROTEOMICS EXAMPLE ##
 
-# Extract the summed peak data with any tool (here, pspecterlib, which uses mzR)
+# Extract the summed peak data with any tool (here, pspecterlib, which uses mzR on the backend)
 MSPath <- system.file("extdata", "Intact_Protein_Summed_MS1.mzML", package = "IsoMatchMS")
 ScanMetadata <- pspecterlib::get_scan_metadata(MSPath)
 PeakData <- pspecterlib::get_peak_data(ScanMetadata, ScanNumber = 1, MinAbundance = 0.1)
@@ -108,12 +108,12 @@ ProteinNames <- ProteinData$Protein.accession
 # Get the settings file path
 Intact_Settings_Path <- system.file("extdata", "Intact_Protein_Defaults.xlsx", package = "IsoMatchMS")
 
-# Now, run the main pipeline 
+# Now, run the main pipeline
 run_isomatchms(
     Biomolecule = Proteoform,
     BioType = "ProForma",
-    SummedSpectra = PeakData, 
-    SettingsFile = Intact_Settings_Path, 
+    SummedSpectra = PeakData,
+    SettingsFile = Intact_Settings_Path,
     Path = file.path(.getDownloadsFolder(), "Intact_Example"),
     Identifiers = ProteinNames,
     Messages = TRUE
@@ -133,15 +133,35 @@ ProteinNames <- ProteinData$Protein
 # Get the settings file path
 Digested_Settings_Path <- system.file("extdata", "Peptides_Defaults.xlsx", package = "IsoMatchMS")
 
-# Now, run the main pipeline 
+# Now, run the main pipeline
 run_isomatchms(
     Biomolecule = ProForma,
     BioType = "ProForma",
-    SummedSpectra = PeakData, 
-    SettingsFile = Digested_Settings_Path, 
+    SummedSpectra = PeakData,
+    SettingsFile = Digested_Settings_Path,
     Path = file.path(.getDownloadsFolder(), "Digested_Example"),
     Identifiers = ProteinNames,
     Messages = TRUE
+)
+
+## GLYCAN EXAMPLE ##
+
+# Read peak data 
+MSPath <- system.file("extdata", "Glycans_PeakData.mzML", package = "IsoMatchMS")
+ScanMetadata <- pspecterlib::get_scan_metadata(MSPath)
+PeakData <- pspecterlib::get_peak_data(ScanMetadata, ScanNumber = 1, MinAbundance = 0.1)
+
+# Now, get the molecular formulas
+Glycans <- xlsx::read.xlsx(system.file("extdata", "Glycans_List.xlsx", package = "IsoMatchMS"), 1)
+
+# Run IsoMatchMS
+run_isomatchms(
+    Biomolecule = Glycans$formula,
+    BioType = "Molecular Formula",
+    SummedSpectra = PeakData,
+    SettingsFile = system.file("extdata", "Glycans_Defaults.xlsx", package = "IsoMatchMS"),
+    Path = file.path(.getDownloadsFolder(), "Glycan_Example"), 
+    Identifiers = Glycans$name
 )
 
 }

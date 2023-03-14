@@ -306,7 +306,7 @@ match_biomolecule_to_ms1 <- function(PeakData,
 
   # Implement parallel computing for speed
   doParallel::registerDoParallel(parallel::detectCores())
-
+  
   # Iterate through and match molecular formula data. Remove NULLs and pull out the ID
   MolFormTable <- foreach(it = 1:nrow(MolecularFormulas), .combine = rbind) %dopar% {
     .match_proteoform_to_ms1_iterator(
@@ -314,9 +314,22 @@ match_biomolecule_to_ms1 <- function(PeakData,
       MolForm = MolecularFormulas$`Molecular Formula`[it],
       Charge = MolecularFormulas$Charge[it],
       MassShift = MolecularFormulas$`Mass Shift`[it],
-      AdductMasses = MolecularFormulas$AdductMasses[it]
+      AdductMass = MolecularFormulas$Adduct[it]
     )
   }
+  
+  # Saving this chunk for debugging
+  
+  #test <- lapply(1:nrow(MolecularFormulas), function(it) {
+  #  message(it)
+  #  .match_proteoform_to_ms1_iterator(
+  #      MonoMass = MolecularFormulas$`Monoisotopic Mass`[it],
+  #      MolForm = MolecularFormulas$`Molecular Formula`[it],
+  #      Charge = MolecularFormulas$Charge[it],
+  #      MassShift = MolecularFormulas$`Mass Shift`[it],
+  #      AdductMass = MolecularFormulas$Adduct[it]
+  #  )
+  #})
 
   # If there is no MolFormTable, stop
   if (is.null(MolFormTable) || nrow(MolFormTable) == 0) {
@@ -324,12 +337,15 @@ match_biomolecule_to_ms1 <- function(PeakData,
   }
 
   # Subset matches
-  AllMatches <- merge(MolFormTable, MolecularFormulas, by = c("Monoisotopic Mass", "Mass Shift", "Molecular Formula", "Charge", "AdductMasses"), all.x = T) %>%
+  AllMatches <- merge(MolFormTable %>% dplyr::rename(Adduct = AdductMasses), 
+                      MolecularFormulas, 
+                      by = c("Monoisotopic Mass", "Mass Shift", "Molecular Formula", "Charge", "Adduct"), 
+                      all.x = T) %>%
     dplyr::mutate(ID = as.numeric(as.factor(ID)))
 
   AllMatches <- AllMatches %>%
     dplyr::select(
-      Identifiers, `M/Z`, `Monoisotopic Mass`, Abundance, Isotope, `M/Z Search Window`, `M/Z Experimental`,
+      Identifiers, Adduct, `M/Z`, `Monoisotopic Mass`, Abundance, Isotope, `M/Z Search Window`, `M/Z Experimental`,
       `Intensity Experimental`, `Abundance Experimental`, `PPM Error`, `Absolute Relative Error`,
       Correlation, `Figure of Merit`, Charge, Biomolecules, `Molecular Formula`,
       `Most Abundant Isotope`, ID

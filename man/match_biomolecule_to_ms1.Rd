@@ -10,33 +10,32 @@ match_biomolecule_to_ms1(
   MatchingAlgorithm,
   MinAbundance = 0.1,
   PPMThreshold = 10,
-  IsotopeRange = c(5, 20),
-  ProtonMass = 1.00727647
+  IsotopeRange = c(5, 20)
 )
 }
 \arguments{
-\item{PeakData}{A pspecterlib peak_data object made with "make_peak_data" or
+\item{PeakData}{(peak_data object) from pspecterlib, made with "make_peak_data" or
 extracted from a raw or mzML file with "get_peak_data." Use of centroided data
 is recommended, but not required.}
 
-\item{MolecularFormulas}{A "IsoMatchMS_MolForm" object with Molecular Formulas,
+\item{MolecularFormulas}{(IsoMatchMS_MolForm object) object with Molecular Formulas,
 Mass Shifts, and Charges.}
 
-\item{MatchingAlgorithm}{Either "closest peak" or "highest abundance" where the "closest
+\item{MatchingAlgorithm}{(character) Either "closest peak" or "highest abundance" where the "closest
 peak" implementation chooses the peak closest to the true M/Z value within the PPM window
 and "highest abundance" chooses the highest intensity peak within the PPM window. "closest peak"
 is recommended for peaks that have been peak picked with an external tool,
 and "highest abundance" is recommended for noisy datasets or those with many peaks.}
 
-\item{MinAbundance}{The minimum abundance (calculated intensity) permitted
+\item{MinAbundance}{(numeric) The minimum abundance (calculated intensity) permitted
 to be matched. Default is 0.1, which is 0.1\%.}
 
-\item{PPMThreshold}{The window in PPM to search for peaks around the true peak. Required. Default is 10 ppm.}
+\item{PPMThreshold}{(numeric) The window in PPM to search for peaks around the true peak. Required. Default is 10 ppm.}
 
-\item{IsotopeRange}{The minimum and maximum number of isotopes to consider. Default is c(3,20).}
+\item{IsotopeRange}{(numeric) The minimum and maximum number of isotopes to consider. Default is c(3,20).}
 }
 \value{
-A IsoMatchMS_MatchedPeaks object, which is a data.table containing the
+(IsoMatchMS_MatchedPeaks object) A IsoMatchMS_MatchedPeaks object, which is a data.table containing the
 Identifier, Adduct, M/Z, Intensity, Isotope, M/Z Search Window, Experimental M/Z,
 Experimental Intensity, PPM Error, Absolute Relative Error, Correlation,
 Charge, Biomolecule, and an ID.
@@ -85,7 +84,7 @@ ID \tab A unique ID for each Proteoform, Protein, and Charge combination used in
 # Run two examples with two charge states
 MolForms_Test <- calculate_molform(
    Biomolecules = c("M.SS[Methyl]S.V", "M.SS[6]S[7].V"),
-   BioType = "ProForma", 
+   BioType = "ProForma",
    Identifiers = c("Test1", "Test2"),
    Charge = 1:2
 )

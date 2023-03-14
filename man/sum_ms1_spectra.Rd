@@ -12,18 +12,18 @@ sum_ms1_spectra(
 )
 }
 \arguments{
-\item{mzMLPath}{The path to the mzML file. Required.}
+\item{mzMLPath}{(character) The path to the mzML file. Required.}
 
-\item{PPM_Round}{Number to round to in PPM. Default is 5.}
+\item{PPM_Round}{(numeric) Number to round to in PPM. Default is 5.}
 
-\item{MinimumAbundance}{The minimum abundance value to keep. Acceptable values
+\item{MinimumAbundance}{(numeric) The minimum abundance value to keep. Acceptable values
 range from 0 to 100. Default is 0.01.}
 
-\item{Messages}{A TRUE/FALSE to indicate whether help messages should be printed or not.
+\item{Messages}{(boolean) A TRUE/FALSE to indicate whether help messages should be printed or not.
 Default is TRUE.}
 }
 \value{
-A peak_data object with summed MS1 spectra. This object can be directly
+(peak_data object) A peak_data object with summed MS1 spectra. This object can be directly
 inputted into run_isomatchms.
 }
 \description{

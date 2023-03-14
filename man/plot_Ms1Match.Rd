@@ -7,18 +7,18 @@
 plot_Ms1Match(PeakData, Ms1Match, ID, Trace = FALSE, Window = 5)
 }
 \arguments{
-\item{PeakData}{A pspecterlib peak_data object or data.table with "M/Z" and "Intensity". Required.}
+\item{PeakData}{(peak_data object) A pspecterlib peak_data object or data.table with "M/Z" and "Intensity". Required.}
 
-\item{Ms1Match}{A IsoMatchMS1_MatchedPeaks object from match_biomolecule_to_ms1. Required.}
+\item{Ms1Match}{(IsoMatchMS1_MatchedPeaks) A IsoMatchMS1_MatchedPeaks object from match_biomolecule_to_ms1. Required.}
 
-\item{ID}{The ID in the IsoMatchMS_MatchedPeaks object to plot. Required.}
+\item{ID}{(numeric) The ID in the IsoMatchMS_MatchedPeaks object to plot. Required.}
 
-\item{Trace}{Plot the mass spectrum as a continuous line rather than a series of peaks. Default is FALSE.}
+\item{Trace}{(boolean) Plot the mass spectrum as a continuous line rather than a series of peaks. Default is FALSE.}
 
-\item{Window}{The -/+ m/z value on either side of the matched spectra plot. Default is 5 m/z.}
+\item{Window}{(numeric) The -/+ m/z value on either side of the matched spectra plot. Default is 5 m/z.}
 }
 \value{
-A ggplot object
+(ggplot object) A ggplot object
 }
 \description{
 Returns a static plot with identified calculated peaks
@@ -53,8 +53,8 @@ IsoMatch <- match_biomolecule_to_ms1(
 
 # Make plot
 plot_Ms1Match(
-  PeakData = PeakData, 
-  Ms1Match = IsoMatch, 
+  PeakData = PeakData,
+  Ms1Match = IsoMatch,
   ID = 1
 )
 

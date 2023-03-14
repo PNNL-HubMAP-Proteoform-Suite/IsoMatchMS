@@ -110,7 +110,7 @@ isomatchms_trelliscope <- function(PeakData,
 
   # List relevant IsoMatchMS columns
   RelCol <- c("Identifier", "Absolute Relative Error", "Correlation", "Molecular Formula",
-              "Monoisotopic Mass", "Figure of Merit", "Charge", "Biomolecule", "ID")
+              "Monoisotopic Mass", "Figure of Merit", "Charge", "Biomolecule", "Adduct", "ID")
 
   # Calculate Median PPM Error and Minimum MZ
   MedianPPMError <- IsoMatchMSTrelli %>%

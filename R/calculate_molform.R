@@ -15,8 +15,8 @@
 #' @param MinAbundance (numeric) The minimum abundance (calculated intensity) permitted to be matched.
 #'     Default is 0.1, which is 0.1%. Used for most abundant isotope. This is a pspecterlib-specific
 #'     parameter and shouldn't need to be changed for IsoMatchMS.
-#' @param AdductMasses (list) A labeled list of the masses of adducts to be tested. A max of 5 masses can be given. Proton Adducts
-#'     are the default. Default is list(proton = 1.00727647).
+#' @param AdductMasses (vector) A named vector of the masses of adducts to be tested. 
+#'     A max of 5 masses can be given. Proton Adducts are the default. Default is c(proton = 1.00727647).
 #'
 #' @details
 #' The data.table outputted by this function returns 8 columns.
@@ -79,7 +79,7 @@ calculate_molform <- function(Biomolecules,
                               Charge = 1,
                               AddMostAbundantIsotope = FALSE,
                               MinAbundance = 0.1,
-                              AdductMasses = list(proton = 1.00727647)) {
+                              AdductMasses = c(proton = 1.00727647)) {
 
   ##################
   ## CHECK INPUTS ##
@@ -129,23 +129,20 @@ calculate_molform <- function(Biomolecules,
   }
 
   # AdductMasses must be a single numeric
-  if (length(AdductMasses) < 1 | length(AdductMasses) > 5 | !is.list(AdductMasses)) {
+  if (length(AdductMasses) < 1 | length(AdductMasses) > 5) {
     stop("AdductMasses must be a list of length 1 to 5")
   }
 
   # AdductMasses must be must contain numerics
-  for(x in AdductMasses) {
+  for (x in AdductMasses) {
     if(!is.numeric(x)){
       stop("Values in AdductMasses list must be numeric")
     }
   }
 
-  if(is.null(AdductMasses$proton) & is.null(AdductMasses$Proton)) {
-    message("AdductMasses does not contain a mass for protons. Therefore, it will be set to the default value 1.00727647")
-    AdductMasses$proton <- 1.00727647
+  if (is.null(AdductMasses["proton"]) & is.null(AdductMasses["Proton"])) {
+    warning("AdductMasses does not contain a mass for a proton. Proceeding with inputted masses.")
   }
-
-
 
   ###################
   ## LOAD GLOSSARY ##
@@ -328,7 +325,7 @@ calculate_molform <- function(Biomolecules,
         "Identifiers" = Name,
         "Adduct" = AdductMass,
         "Charge" = Charge,
-        "Molecular Formula" = Biomolecules,
+        "Molecular Formula" = Biomolecule,
         "Mass Shift" = 0,
         "Monoisotopic Mass" = MonoMass,
         "Most Abundant Isotope" = MAI
@@ -338,7 +335,7 @@ calculate_molform <- function(Biomolecules,
 
   }
 
-  # Iterate through Biomoleculess and charges, and calculate all required values
+  # Iterate through biomolecules and charges, and calculate all required values
   Pre_MolForms <- data.table::data.table(
     Pform = rep(Biomolecules, each = length(Charge)),
     theName = rep(Identifiers, each = length(Charge)),
@@ -346,10 +343,10 @@ calculate_molform <- function(Biomolecules,
   ) %>%
     unique()
 
-  #Duplicating rows based in the number of AdductMasses
+  # Duplicating rows based in the number of AdductMasses
   Pre_MolForms <- Pre_MolForms[rep(seq_len(nrow(Pre_MolForms)), each = length(AdductMasses)),]
 
-  #Adding the AdductMasses as a column, creating a row for every combo of Protein, Charge, and AdductMass
+  # Adding the AdductMasses as a column, creating a row for every combo of Protein, Charge, and AdductMass
   Pre_MolForms$AdductMasses <- rep(as.numeric(AdductMasses), times = nrow(Pre_MolForms)/length(AdductMasses))
 
   # Implement parallel computing for speed

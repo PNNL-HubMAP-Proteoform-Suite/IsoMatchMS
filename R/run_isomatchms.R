@@ -70,7 +70,7 @@
 #'
 #' ## INTACT PROTEOMICS EXAMPLE ##
 #'
-#' # Extract the summed peak data with any tool (here, pspecterlib, which uses mzR)
+#' # Extract the summed peak data with any tool (here, pspecterlib, which uses mzR on the backend)
 #' MSPath <- system.file("extdata", "Intact_Protein_Summed_MS1.mzML", package = "IsoMatchMS")
 #' ScanMetadata <- pspecterlib::get_scan_metadata(MSPath)
 #' PeakData <- pspecterlib::get_peak_data(ScanMetadata, ScanNumber = 1, MinAbundance = 0.1)
@@ -117,6 +117,26 @@
 #'     Path = file.path(.getDownloadsFolder(), "Digested_Example"),
 #'     Identifiers = ProteinNames,
 #'     Messages = TRUE
+#' )
+#' 
+#' ## GLYCAN EXAMPLE ##
+#' 
+#' # Read peak data 
+#' MSPath <- system.file("extdata", "Glycans_PeakData.mzML", package = "IsoMatchMS")
+#' ScanMetadata <- pspecterlib::get_scan_metadata(MSPath)
+#' PeakData <- pspecterlib::get_peak_data(ScanMetadata, ScanNumber = 1, MinAbundance = 0.1)
+#' 
+#' # Now, get the molecular formulas
+#' Glycans <- xlsx::read.xlsx(system.file("extdata", "Glycans_List.xlsx", package = "IsoMatchMS"), 1)
+#' 
+#' # Run IsoMatchMS
+#' run_isomatchms(
+#'     Biomolecule = Glycans$formula,
+#'     BioType = "Molecular Formula",
+#'     SummedSpectra = PeakData,
+#'     SettingsFile = system.file("extdata", "Glycans_Defaults.xlsx", package = "IsoMatchMS"),
+#'     Path = file.path(.getDownloadsFolder(), "Glycan_Example"), 
+#'     Identifiers = Glycans$name
 #' )
 #'
 #' }
@@ -167,8 +187,8 @@ run_isomatchms <- function(Biomolecules,
   # 1. Calculate Molecular Formula
   if (Messages) {message("Calculating molecular formulas...")}
 
-  AdductMasses <- Settings[Settings$Parameter == "AdductMasses", "Default"] %>% stringr::str_split(",") %>% as.numeric() %>% as.list()
-  names(AdductMasses) <- Settings[Settings$Parameter == "AdductLabels", "Default"] %>% stringr::str_split(",")
+  AdductMasses <- Settings[Settings$Parameter == "AdductMasses", "Default"] %>% stringr::str_split(",") %>% unlist() %>% as.numeric()
+  names(AdductMasses) <- Settings[Settings$Parameter == "AdductLabels", "Default"] %>% stringr::str_split(",") %>% unlist()
 
   MolForm <- calculate_molform(
     Biomolecules = Biomolecules,

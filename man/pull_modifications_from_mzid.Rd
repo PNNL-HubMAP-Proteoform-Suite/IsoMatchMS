@@ -7,10 +7,10 @@
 pull_modifications_from_mzid(IDPath)
 }
 \arguments{
-\item{IDPath}{The path to the mzid file. Required.}
+\item{IDPath}{(character) The path to the mzid file. Required.}
 }
 \value{
-Returns a data.frame of scan numbers, proforma strings, and protein names.
+(data.frame) Returns a data.frame of scan numbers, proforma strings, and protein names.
 Note that all unmodified sequences are included as well.
 }
 \description{
