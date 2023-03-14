@@ -155,6 +155,9 @@ match_biomolecule_to_ms1 <- function(PeakData,
       dplyr::rename(`M/Z` = mass, Abundance = abundance, Isotope = isotope) %>%
       dplyr::select(-isolabel) %>%
       dplyr::mutate(`M/Z` = (`M/Z` + (Charge * AdductMass)) / Charge)
+    
+    # If we don't calculate the minimum number of peaks, dispose 
+    if (nrow(IsoDist) < min(IsotopeRange)) {return(NULL)}
 
     # Add mass change if it is not NULL
     if (!is.null(MassShift) & MassShift != 0) {
@@ -205,14 +208,13 @@ match_biomolecule_to_ms1 <- function(PeakData,
             sub <- PeakData[PeakData$`M/Z` >= low & PeakData$`M/Z` <= high,]
             if (nrow(sub) == 0) {return(NA)} else {return(sub[which.max(sub$Abundance), "M/Z"])}
           }) %>% unlist()
-        ) %>%
-        dplyr::filter(!is.na(`M/Z Experimental`)) %>%
+        ) %>% 
         dplyr::mutate(
           `Intensity Experimental` = purrr::map(`M/Z Experimental`, function(x) {
-            PeakData[PeakData$`M/Z` == x, "Intensity"]
+            ifelse(is.na(x), NA, PeakData[PeakData$`M/Z` == x, "Intensity"])
           }) %>% unlist(),
           `Abundance Experimental` = purrr::map(`M/Z Experimental`, function(x) {
-            PeakData[PeakData$`M/Z` == x, "Abundance"]
+            ifelse(is.na(x), NA, PeakData[PeakData$`M/Z` == x, "Abundance"])
           }) %>% unlist()
         ) %>%
         dplyr::select(-c(MZLower, MZUpper))
@@ -222,85 +224,86 @@ match_biomolecule_to_ms1 <- function(PeakData,
     # Calculate PPM Error
     IsoDist$`PPM Error` <- ((IsoDist$`M/Z Experimental` - IsoDist$`M/Z`) / IsoDist$`M/Z`) * 1e6
 
+    ## Removing this chunk for now ##
+    
     # Subset down to numbers that are within 1 place of each other
-    CloseValues <- IsoDist %>%
-      dplyr::select(Isotope) %>%
-      dplyr::mutate(
-        Order = Isotope - dplyr::lag(Isotope),
-        Order = ifelse(is.na(Order), 1, Order),
-        Take = Order == dplyr::lag(Order) & Order == 1,
-        Take = ifelse(is.na(Take), TRUE, Take),
-        Take = ifelse(Take == TRUE, ifelse(dplyr::lag(Take) == FALSE, FALSE, TRUE), Take),
-        Take = ifelse(is.na(Take), TRUE, Take)
-      )
+    #CloseValues <- IsoDist %>%
+    #  dplyr::select(Isotope) %>%
+    #  dplyr::mutate(
+    #    Order = Isotope - dplyr::lag(Isotope),
+    #    Order = ifelse(is.na(Order), 1, Order),
+    #    Take = Order == dplyr::lag(Order) & Order == 1,
+    #    Take = ifelse(is.na(Take), TRUE, Take),
+    #    Take = ifelse(Take == TRUE, ifelse(dplyr::lag(Take) == FALSE, FALSE, TRUE), Take),
+    #    Take = ifelse(is.na(Take), TRUE, Take)
+    #  )
+    #IsoDist <- IsoDist[CloseValues$Take,]
 
-    IsoDist <- IsoDist[CloseValues$Take,]
-
-    if (nrow(IsoDist) < min(IsotopeRange)) {return(NULL)}
+    #if (nrow(IsoDist) < min(IsotopeRange)) {return(NULL)}
 
     ##########################
     ## CALCULATED ABUNDANCE ##
     ##########################
 
     # Get max calculated intensity and max measured abundance
-    calcInten <- unlist(IsoDist$Intensity)[which.max(unlist(IsoDist$Intensity))]
-    maxAbun <- unlist(IsoDist$Abundance)[which.max(unlist(IsoDist$Abundance))]
+    #calcInten <- unlist(IsoDist$Intensity)[which.max(unlist(IsoDist$Intensity))]
+    #maxAbun <- unlist(IsoDist$Abundance)[which.max(unlist(IsoDist$Abundance))]
 
     # Determine scale and scale intensity
-    scalingFactor <- maxAbun / calcInten
-    IsoDist$Abundance <- IsoDist$Intensity * scalingFactor
+    #scalingFactor <- maxAbun / calcInten
+    #IsoDist$Abundance <- IsoDist$Intensity * scalingFactor
 
     ######################
     ## ABUNDANCE FILTER ##
     ######################
 
     # Flag abundance changes that are greater than the threshold
-    IsoDist <- IsoDist %>%
-      dplyr::mutate(
-        `Abundance Diff` = `Abundance Experimental` -
-          dplyr::lag(`Abundance Experimental`, default = dplyr::first(`Abundance Experimental`)),
-        Flag = abs(`Abundance Diff`) >= MinAbundance | `Abundance Diff` == 0
-      )
+    #IsoDist <- IsoDist %>%
+    #  dplyr::mutate(
+    #    `Abundance Diff` = `Abundance Experimental` -
+    #      dplyr::lag(`Abundance Experimental`, default = dplyr::first(`Abundance Experimental`)),
+    #    Flag = abs(`Abundance Diff`) >= MinAbundance | `Abundance Diff` == 0
+    #  )
 
     # Determine where to subset from
-    if (FALSE %in% IsoDist$Flag) {
-      IsoDist <- IsoDist[1:(min(which(IsoDist$Flag == FALSE))-1),]
-    }
+    #if (FALSE %in% IsoDist$Flag) {
+    #  IsoDist <- IsoDist[1:(min(which(IsoDist$Flag == FALSE))-1),]
+    #}
 
     ######################
     ## CALCULATE SCORES ##
     ######################
 
     # Add correlation score
-    if (nrow(IsoDist) >= min(IsotopeRange)) {
+    #if (nrow(IsoDist) >= min(IsotopeRange)) {
 
-      # Generate an abundance match data.frame
-      AbundanceDF <- merge(OrigIsoDist[,c("M/Z", "Abundance")], IsoDist[,c("M/Z", "Abundance Experimental")],
-                           by = "M/Z", all.x = T)
-      AbundanceDF$`Abundance Experimental`[is.na(AbundanceDF$`Abundance Experimental`)] <- 0
+    # Generate an abundance match data.frame
+    AbundanceDF <- merge(OrigIsoDist[,c("M/Z", "Abundance")], IsoDist[,c("M/Z", "Abundance Experimental")],
+                         by = "M/Z", all.x = T)
+    AbundanceDF$`Abundance Experimental`[is.na(AbundanceDF$`Abundance Experimental`)] <- 0
 
-      # Calculate Absolute Relative Error, Correlation, and Figure of merit
-      IsoDist$`Absolute Relative Error` <- 1/nrow(AbundanceDF) * sum(abs(AbundanceDF$Abundance - AbundanceDF$`Abundance Experimental`) / AbundanceDF$Abundance)
-      IsoDist$Correlation <- stats::cor(AbundanceDF$`Abundance Experimental`, AbundanceDF$Abundance, method = "pearson")
-      IsoDist$`Figure of Merit` <- nrow(AbundanceDF) / (sum((AbundanceDF$Abundance - AbundanceDF$`Abundance Experimental`)^2 + attributes(PeakData)$pspecter$MinimumAbundance^2))
+    # Calculate Absolute Relative Error, Correlation, and Figure of merit
+    IsoDist$`Absolute Relative Error` <- 1/nrow(AbundanceDF) * sum(abs(AbundanceDF$Abundance - AbundanceDF$`Abundance Experimental`) / AbundanceDF$Abundance)
+    IsoDist$Correlation <- stats::cor(AbundanceDF$`Abundance Experimental`, AbundanceDF$Abundance, method = "pearson")
+    IsoDist$`Figure of Merit` <- nrow(AbundanceDF) / (sum((AbundanceDF$Abundance - AbundanceDF$`Abundance Experimental`)^2 + attributes(PeakData)$pspecter$MinimumAbundance^2))
 
-      # Figure of merit
-      IsoDist$`Figure of Merit` <- ifelse(is.infinite(IsoDist$`Figure of Merit`), NA, IsoDist$`Figure of Merit`)
+    # Figure of merit
+    IsoDist$`Figure of Merit` <- ifelse(is.infinite(IsoDist$`Figure of Merit`), NA, IsoDist$`Figure of Merit`)
 
-      # Generate an identifier
-      IsoDist$ID <- uuid::UUIDgenerate()
+    # Generate an identifier
+    IsoDist$ID <- uuid::UUIDgenerate()
 
-      # Add input columns
-      IsoDist$`Monoisotopic Mass` <- MonoMass
-      IsoDist$`Molecular Formula` <- MolForm
-      IsoDist$Charge <- Charge
-      IsoDist$`Mass Shift` <- MassShift
-      IsoDist$AdductMasses <- AdductMass
+    # Add input columns
+    IsoDist$`Monoisotopic Mass` <- MonoMass
+    IsoDist$`Molecular Formula` <- MolForm
+    IsoDist$Charge <- Charge
+    IsoDist$`Mass Shift` <- MassShift
+    IsoDist$AdductMasses <- AdductMass
 
-      # Add missing columns and reorder
-      return(IsoDist)
+    # Add missing columns and reorder
+    return(IsoDist)
 
-    } else {return(NULL)}
+    #} else {return(NULL)}
 
   }
 

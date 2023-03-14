@@ -64,7 +64,7 @@
 isomatchms_trelliscope <- function(PeakData,
                                     Ms1Match,
                                     Path = file.path(.getDownloadsFolder(), "Ms1Match", "Trelliscope"),
-                                    MinCorrelationScore = 0.7,
+                                    MinCorrelationScore = -1,
                                     Window = 2) {
 
   ##################
@@ -102,7 +102,8 @@ isomatchms_trelliscope <- function(PeakData,
   # Convert IsoMatchMS class
   IsoMatchMSTrelli <- Ms1Match
   class(IsoMatchMSTrelli) <- c("data.table", "data.frame")
-  IsoMatchMSTrelli <- IsoMatchMSTrelli %>% dplyr::rename(Identifier = Identifiers, Biomolecule = Biomolecules)
+  IsoMatchMSTrelli <- IsoMatchMSTrelli %>% dplyr::select(-Biomolecules)
+  IsoMatchMSTrelli <- IsoMatchMSTrelli %>% dplyr::rename(Identifier = Identifiers)
 
   # Filter IsoMatchMS down to the correlation score
   IsoMatchMSTrelli <- IsoMatchMSTrelli %>%
@@ -110,7 +111,7 @@ isomatchms_trelliscope <- function(PeakData,
 
   # List relevant IsoMatchMS columns
   RelCol <- c("Identifier", "Absolute Relative Error", "Correlation", "Molecular Formula",
-              "Monoisotopic Mass", "Figure of Merit", "Charge", "Biomolecule", "Adduct", "ID")
+              "Monoisotopic Mass", "Figure of Merit", "Charge", "Adduct", "ID")
 
   # Calculate Median PPM Error and Minimum MZ
   MedianPPMError <- IsoMatchMSTrelli %>%

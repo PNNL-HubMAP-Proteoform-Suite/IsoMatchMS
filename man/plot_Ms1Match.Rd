@@ -4,7 +4,7 @@
 \alias{plot_Ms1Match}
 \title{Plots the Biomolecule Isotope Profile on top of the experimental sequence}
 \usage{
-plot_Ms1Match(PeakData, Ms1Match, ID, Trace = FALSE, Window = 5)
+plot_Ms1Match(PeakData, Ms1Match, ID, Trace = FALSE, Window = 2)
 }
 \arguments{
 \item{PeakData}{(peak_data object) A pspecterlib peak_data object or data.table with "M/Z" and "Intensity". Required.}
