@@ -57,12 +57,55 @@
 #' ####################
 #'
 #' ## INTACT PROTEOMICS EXAMPLE ##
-#'
+#' 
+#' # Load data 
 #' protein_data <- read.csv(system.file("extdata", "Intact_Proteins_List_Short.csv", package = "IsoMatchMS"))
 #' peak_data <- readRDS(system.file("extdata", "Intact_PeakData.RDS", package = "IsoMatchMS"))
+#' 
+#' # Run example
+#' run_isomatchms(
+#'     Biomolecule = protein_data$Proteoform,
+#'     BioType = "ProForma",
+#'     SummedSpectra = peak_data,
+#'     SettingsFile = system.file("extdata", "Intact_Protein_Defaults.xlsx", package = "IsoMatchMS"),
+#'     Path = file.path(.getDownloadsFolder(), "Intact_Example_Small"),
+#'     Identifiers = protein_data$Protein.accession,
+#'     Messages = TRUE
+#' )
 #'
 #'
 #' ## DIGESTED PROTEOMICS EXAMPLE ##
+#' 
+#' # Load data 
+#' peptide_data <- read.csv(system.file("extdata", "Peptides_List_Short.csv", package = "IsoMatchMS"))
+#' peak_data <- readRDS(system.file("extdata", "Peptides_PeakData.RDS", package = "IsoMatchMS"))
+#' 
+#' # Run example
+#' run_isomatchms(
+#'     Biomolecule = peptide_data$Proteoform,
+#'     BioType = "ProForma",
+#'     SummedSpectra = peak_data,
+#'     SettingsFile = system.file("extdata", "Peptides_Defaults.xlsx", package = "IsoMatchMS"),
+#'     Path = file.path(.getDownloadsFolder(), "Digested_Example_Small"),
+#'     Identifiers = peptide_data$Protein,
+#'     Messages = TRUE
+#' )
+#'
+#' ## GLYCAN EXAMPLE ## 
+#' 
+#' # Load data
+#' glycan_data <- xlsx::read.xlsx(system.file("extdata", "Glycans_List_Short.xlsx", package = "IsoMatchMS"), 1)
+#' peak_data <- readRDS(system.file("extdata", "Glycans_PeakData.RDS", package = "IsoMatchMS"))
+#' 
+#' # Run example
+#' run_isomatchms(
+#'     Biomolecule = glycan_data$formula,
+#'     BioType = "Molecular Formula",
+#'     SummedSpectra = peak_data,
+#'     SettingsFile = system.file("extdata", "Glycans_Defaults.xlsx", package = "IsoMatchMS"),
+#'     Path = file.path(.getDownloadsFolder(), "Glycan_Example_Small"), 
+#'     Identifiers = glycan_data$name
+#' )
 #'
 #' ###################
 #' ## FULL EXAMPLES ##
