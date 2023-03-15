@@ -118,7 +118,7 @@ isomatchms_trelliscope <- function(PeakData,
     dplyr::select(ID, `PPM Error`, `M/Z`) %>%
     dplyr::group_by(ID) %>%
     dplyr::summarise(
-      `Median PPM Error` = median(`PPM Error`),
+      `Median PPM Error` = median(`PPM Error`, na.rm = T),
       `Minimum Matched M/Z` = min(`M/Z`),
       `Peaks Matched` = length(`M/Z`)
     ) %>%

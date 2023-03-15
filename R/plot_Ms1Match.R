@@ -119,8 +119,7 @@ plot_Ms1Match <- function(PeakData,
 
 
   # Generate the plot
-  plot <- ggplot2::ggplot(data = AdjPeakData, ggplot2::aes(x = `M/Z`, y = Abundance)) +
-    ggplot2::geom_line(color = "black") + 
+  plot <- ggplot2::ggplot() +
     ggplot2::geom_line(data = MS1, ggplot2::aes(x = `M/Z`, y = Abundance), color = "black", alpha = 0.25) +
     ggplot2::ylim(c(0, max(MS1$Abundance + 1))) +
     ggplot2::geom_point(data = Ms1MatchSub, ggplot2::aes(x = `M/Z`, y = `Abundance Scaled`, color = Matched), size = 3) +

@@ -90,7 +90,7 @@
 match_biomolecule_to_ms1 <- function(PeakData,
                                     MolecularFormulas,
                                     MatchingAlgorithm,
-                                    MinAbundance = 0.1,
+                                    AbundanceThreshold = 0.5,
                                     PPMThreshold = 10,
                                     IsotopeRange = c(5, 20)) {
 
@@ -113,11 +113,6 @@ match_biomolecule_to_ms1 <- function(PeakData,
     stop("PPMThreshold must be a nonzero numeric.")
   }
   PPMThreshold <- abs(PPMThreshold)
-
-  # MinAbundance should be a numeric value
-  if (!is.numeric(MinAbundance) || MinAbundance < 0 | MinAbundance > 100) {
-    stop("MinAbundance should be a numeric between 0 and 100, inclusive.")
-  }
 
   # Check that max isotope is a numeric
   if (!is.numeric(IsotopeRange) | length(unique(abs(round(IsotopeRange)))) != 2) {
@@ -146,14 +141,16 @@ match_biomolecule_to_ms1 <- function(PeakData,
       return(NULL)
     }
 
-    # Convert the molecular formula back to an atomic vector
-    molform <- pspecterlib::as.molform(MolForm)
-
     # Get isotope profile (distribution). Match quality is determined by the limit function.
-    IsoDist <- pspecterlib::calculate_iso_profile(molform, MinAbundance, limit = 0.001) %>%
+    IsoDist <- Rdisop::getMolecule(MolForm, maxisotopes = 20)$isotopes[[1]] %>%
+      t() %>%
       data.table::data.table() %>%
-      dplyr::rename(`M/Z` = mass, Abundance = abundance, Isotope = isotope) %>%
-      dplyr::select(-isolabel) %>%
+      dplyr::rename(`M/Z` = V1, Abundance = V2) %>%
+      dplyr::mutate(
+        Abundance = Abundance / max(Abundance) * 100,
+        Isotope = 0:(length(Abundance) - 1)
+      ) %>%
+      dplyr::filter(Abundance >= 1) %>% 
       dplyr::mutate(`M/Z` = (`M/Z` + (Charge * AdductMass)) / Charge)
     
     # If we don't calculate the minimum number of peaks, dispose 
@@ -175,28 +172,58 @@ match_biomolecule_to_ms1 <- function(PeakData,
     IsoDist$`M/Z Search Window` <- IsoDist$`M/Z` * PPMThreshold / 1e6
 
     if (MatchingAlgorithm == "closest peak") {
-
-      # For each theoretical peak, find the closest index in ms, where ms = theoretical
-      LeftIndex <- findInterval(IsoDist$`M/Z`, PeakData$`M/Z`, rightmost.closed = FALSE, all.inside = TRUE)
-
-      # Compute mz differences (absolute) to closest element to each side, smaller to the left and next greater to the right:
-      IsoDist$`Left Difference` <- abs(PeakData$`M/Z`[LeftIndex] - IsoDist$`M/Z`)
-      IsoDist$`Right Difference` <- abs(PeakData$`M/Z`[LeftIndex + 1] - IsoDist$`M/Z`)
-      IsoDist$`Closest Index` <- LeftIndex
-
-      # Set closest index as right side one, if difference is smaller:
-      RightIndexBest <- which(IsoDist$`Right Difference` < IsoDist$`Left Difference`)
-      IsoDist$`Closest Index`[RightIndexBest] <- IsoDist$`Closest Index`[RightIndexBest] + 1
-      IsoDist$`M/Z Difference` <- abs(PeakData$`M/Z`[IsoDist$`Closest Index`] - IsoDist$`M/Z`)
-
-      # Keep only matches within the tolerance
-      IsoDist <- IsoDist[which(IsoDist$`M/Z Difference` < IsoDist$`M/Z Search Window`), ]
-      IsoDist$`M/Z Experimental` <- PeakData$`M/Z`[IsoDist$`Closest Index`]
-      IsoDist$`Intensity Experimental` <- PeakData$Intensity[IsoDist$`Closest Index`]
-      IsoDist$`Abundance Experimental` <- PeakData$Abundance[IsoDist$`Closest Index`]
-
-      # Remove non-necessary rows moving forward
-      IsoDist <- IsoDist %>% dplyr::select(-c(`Left Difference`, `Right Difference`, `Closest Index`, `M/Z Difference`))
+      
+      IsoDist <- IsoDist %>%
+        dplyr::mutate(
+          MZLower = `M/Z` - `M/Z Search Window`,
+          MZUpper = `M/Z` + `M/Z Search Window`
+        )
+      
+      # Subset PeakData
+      PeakSub <- PeakData[PeakData$`M/Z` >= min(IsoDist$MZLower) & PeakData$`M/Z` <= max(IsoDist$MZUpper),]
+      
+      # Rescale abundances
+      PeakRe <- pspecterlib::make_peak_data(MZ = PeakSub$`M/Z`, Intensity = PeakSub$Abundance) 
+      class(PeakRe) <- c("data.table", "data.frame")
+      
+      # Match the experimental peaks based on closest MZ and Abundance 
+      IsoDist <- IsoDist %>% dplyr::mutate(
+        
+        `Closest Index` = purrr::pmap(list(MZLower, MZUpper, Abundance), function(low, high, abun) {
+          
+          # Get peak range 
+          sub <- PeakRe[PeakRe$`M/Z` >= low & PeakRe$`M/Z` <= high & PeakRe$Abundance >= abun - (abun * AbundanceThreshold) & PeakRe$Abun <= abun + (abun * AbundanceThreshold) ,]
+          
+          # If no peaks, return 0
+          if (nrow(sub) == 0) {return(NA)}
+          
+          # Make rank table and identify best match. It should be the closest MZ and Abundance,
+          # with a preference for MZ 
+          BestMatch <- data.frame(
+            Names = 1:nrow(sub),
+            Rank1 = order(abs(sub$`M/Z` - mean(c(low, high)))),
+            Rank2 = order(abs(sub$Abundance - abun))
+          ) %>% 
+            dplyr::mutate(
+              TotalRank = Rank1 + Rank2
+            ) %>%
+            dplyr::filter(TotalRank == min(TotalRank)) %>%
+            dplyr::filter(Rank1 == min(Rank1)) %>% 
+            dplyr::select(Names) %>%
+            unlist()
+          
+          return(which.min(abs(PeakRe$`M/Z` - sub$`M/Z`[BestMatch])))
+          
+        }) %>% unlist(),
+        
+        `M/Z Experimental` = ifelse(!is.na(`Closest Index`), PeakSub$`M/Z`[`Closest Index`], NA),
+        `Intensity Experimental` = ifelse(!is.na(`Closest Index`), PeakSub$Intensity[`Closest Index`], NA),
+        `Abundance Experimental` =  ifelse(!is.na(`Closest Index`), PeakSub$Abundance[`Closest Index`], NA),
+        `PPM Error` = ifelse(!is.na(`Closest Index`), (`M/Z Experimental` - `M/Z`) / `M/Z` * 1e6, NA)
+    
+      ) %>%
+        dplyr::select(-`Closest Index`)
+          
 
     } else if (MatchingAlgorithm == "highest abundance") {
 
@@ -220,9 +247,6 @@ match_biomolecule_to_ms1 <- function(PeakData,
         dplyr::select(-c(MZLower, MZUpper))
 
     }
-
-    # Calculate PPM Error
-    IsoDist$`PPM Error` <- ((IsoDist$`M/Z Experimental` - IsoDist$`M/Z`) / IsoDist$`M/Z`) * 1e6
 
     ## Removing this chunk for now ##
     
@@ -323,7 +347,7 @@ match_biomolecule_to_ms1 <- function(PeakData,
   
   # Saving this chunk for debugging
   
-  #test <- lapply(1:nrow(MolecularFormulas), function(it) {
+  #MolFormTable <- do.call(rbind, lapply(1:nrow(MolecularFormulas), function(it) {
   #  message(it)
   #  .match_proteoform_to_ms1_iterator(
   #      MonoMass = MolecularFormulas$`Monoisotopic Mass`[it],
@@ -332,7 +356,7 @@ match_biomolecule_to_ms1 <- function(PeakData,
   #      MassShift = MolecularFormulas$`Mass Shift`[it],
   #      AdductMass = MolecularFormulas$Adduct[it]
   #  )
-  #})
+  #}))
 
   # If there is no MolFormTable, stop
   if (is.null(MolFormTable) || nrow(MolFormTable) == 0) {

@@ -316,7 +316,7 @@ calculate_molform <- function(Biomolecules,
 
         # Get the most abundant isotope
         MAI <- Isotopes[which.max(Isotopes$abundance), "mass"] %>% unlist()
-        MAI <- (MAI + (Charge * AdductMasses)) / Charge
+        MAI <- (MAI + (Charge * AdductMass)) / Charge
 
       } else {MAI <- NA}
 

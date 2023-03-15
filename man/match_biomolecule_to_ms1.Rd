@@ -8,7 +8,7 @@ match_biomolecule_to_ms1(
   PeakData,
   MolecularFormulas,
   MatchingAlgorithm,
-  MinAbundance = 0.1,
+  AbundanceThreshold = 0.5,
   PPMThreshold = 10,
   IsotopeRange = c(5, 20)
 )
@@ -27,12 +27,12 @@ and "highest abundance" chooses the highest intensity peak within the PPM window
 is recommended for peaks that have been peak picked with an external tool,
 and "highest abundance" is recommended for noisy datasets or those with many peaks.}
 
-\item{MinAbundance}{(numeric) The minimum abundance (calculated intensity) permitted
-to be matched. Default is 0.1, which is 0.1\%.}
-
 \item{PPMThreshold}{(numeric) The window in PPM to search for peaks around the true peak. Required. Default is 10 ppm.}
 
 \item{IsotopeRange}{(numeric) The minimum and maximum number of isotopes to consider. Default is c(3,20).}
+
+\item{MinAbundance}{(numeric) The minimum abundance (calculated intensity) permitted
+to be matched. Default is 0.1, which is 0.1\%.}
 }
 \value{
 (IsoMatchMS_MatchedPeaks object) A IsoMatchMS_MatchedPeaks object, which is a data.table containing the

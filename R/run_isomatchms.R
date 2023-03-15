@@ -258,7 +258,7 @@ run_isomatchms <- function(Biomolecules,
     PeakData = FilteredData,
     MolecularFormulas = MolForm,
     MatchingAlgorithm = Settings[Settings$Parameter == "MatchingAlgorithm", "Default"] %>% unlist(),
-    MinAbundance = Settings[Settings$Parameter == "MinimumAbundance", "Default"] %>% unlist() %>% as.numeric(),
+    #MinAbundance = Settings[Settings$Parameter == "MinimumAbundance", "Default"] %>% unlist() %>% as.numeric(),
     PPMThreshold = Settings[Settings$Parameter == "PPMThreshold", "Default"] %>% as.numeric(),
     IsotopeRange = Settings[Settings$Parameter == "IsotopeRange", "Default"] %>% strsplit(",") %>% unlist() %>% as.numeric()
   )
