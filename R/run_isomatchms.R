@@ -257,10 +257,10 @@ run_isomatchms <- function(Biomolecules,
   MatchedPeaks <- match_biomolecule_to_ms1(
     PeakData = FilteredData,
     MolecularFormulas = MolForm,
-    MatchingAlgorithm = Settings[Settings$Parameter == "MatchingAlgorithm", "Default"] %>% unlist(),
+    #MatchingAlgorithm = Settings[Settings$Parameter == "MatchingAlgorithm", "Default"] %>% unlist(),
     #MinAbundance = Settings[Settings$Parameter == "MinimumAbundance", "Default"] %>% unlist() %>% as.numeric(),
-    PPMThreshold = Settings[Settings$Parameter == "PPMThreshold", "Default"] %>% as.numeric(),
-    IsotopeRange = Settings[Settings$Parameter == "IsotopeRange", "Default"] %>% strsplit(",") %>% unlist() %>% as.numeric()
+    PPMThreshold = Settings[Settings$Parameter == "PPMThreshold", "Default"] %>% as.numeric()
+    #IsotopeRange = Settings[Settings$Parameter == "IsotopeRange", "Default"] %>% strsplit(",") %>% unlist() %>% as.numeric()
   )
   if (is.null(MatchedPeaks)) {
     write.csv("No matches found", file.path(Path, "Matched_Isotope_Distributions.csv"), row.names = F, quote = F)

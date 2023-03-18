@@ -7,10 +7,10 @@
 match_biomolecule_to_ms1(
   PeakData,
   MolecularFormulas,
-  MatchingAlgorithm,
   AbundanceThreshold = 0.5,
   PPMThreshold = 10,
-  IsotopeRange = c(5, 20)
+  IsotopeMinimum = 3,
+  IsotopeAlgorithm = "Rdisop"
 )
 }
 \arguments{
@@ -21,18 +21,19 @@ is recommended, but not required.}
 \item{MolecularFormulas}{(IsoMatchMS_MolForm object) object with Molecular Formulas,
 Mass Shifts, and Charges.}
 
-\item{MatchingAlgorithm}{(character) Either "closest peak" or "highest abundance" where the "closest
-peak" implementation chooses the peak closest to the true M/Z value within the PPM window
-and "highest abundance" chooses the highest intensity peak within the PPM window. "closest peak"
-is recommended for peaks that have been peak picked with an external tool,
-and "highest abundance" is recommended for noisy datasets or those with many peaks.}
+\item{AbundanceThreshold}{(numeric) The +/- percent abundance an isotope peak
+can vary and still be considered a match. For example, if the true isotope peak
+is 3 but the measured value is 4, an AbundanceThreshold of 50\% will consider
+that peak a true match if it ranges between 1.5 - 4.5. Default is 50.}
 
 \item{PPMThreshold}{(numeric) The window in PPM to search for peaks around the true peak. Required. Default is 10 ppm.}
 
-\item{IsotopeRange}{(numeric) The minimum and maximum number of isotopes to consider. Default is c(3,20).}
+\item{IsotopeMinimum}{(numeric) The minimum number of isotopes to consider. Default is 3.}
 
-\item{MinAbundance}{(numeric) The minimum abundance (calculated intensity) permitted
-to be matched. Default is 0.1, which is 0.1\%.}
+\item{IsotopeAlgorithm}{(character) "isopat" uses the isopat package to calculate isotopes,
+while "Rdisop" uses the Rdisop package. Though more accurate, Rdisop has been known
+to crash on Windows computers when called iteratively more than 1000 times.
+Default is Rdisop, though isopat is an alternative.}
 }
 \value{
 (IsoMatchMS_MatchedPeaks object) A IsoMatchMS_MatchedPeaks object, which is a data.table containing the

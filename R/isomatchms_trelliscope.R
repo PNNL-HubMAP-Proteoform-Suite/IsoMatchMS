@@ -111,7 +111,7 @@ isomatchms_trelliscope <- function(PeakData,
 
   # List relevant IsoMatchMS columns
   RelCol <- c("Identifier", "Absolute Relative Error", "Correlation", "Molecular Formula",
-              "Monoisotopic Mass", "Figure of Merit", "Charge", "Adduct", "ID")
+              "Monoisotopic Mass", "Charge", "Adduct", "ID")
 
   # Calculate Median PPM Error and Minimum MZ
   MedianPPMError <- IsoMatchMSTrelli %>%
@@ -120,7 +120,7 @@ isomatchms_trelliscope <- function(PeakData,
     dplyr::summarise(
       `Median PPM Error` = median(`PPM Error`, na.rm = T),
       `Minimum Matched M/Z` = min(`M/Z`),
-      `Peaks Matched` = length(`M/Z`)
+      `Peaks Matched` = sum(!is.na(`PPM Error`))
     ) %>%
     dplyr::ungroup()
 
