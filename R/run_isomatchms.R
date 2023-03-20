@@ -196,21 +196,22 @@ run_isomatchms <- function(Biomolecules,
   ##################
   ## CHECK INPUTS ##
   ##################
-
+  
   # Modifications, ModType, and Proteins are checked by the calculate_molform function
 
   # SummedSpectra are checked in the filter_peaks function
-
+  
   # The settings file should have be an xlsx
   if (!grepl(".xlsx", SettingsFile)) {
     stop("SettingsFile needs to be an xlsx file.")
   }
-  Settings <- suppressWarnings({xlsx::read.xlsx(SettingsFile, 1)})
-
+  Settings <- suppressWarnings({xlsx::read.xlsx(SettingsFile, 1) %>% dplyr::filter(!is.na(Parameter))})
+  
   # The settings file should have all the required parameters
-  RequiredRow <- c("MZRange", "NoiseFilter", "Charges", "MatchingAlgorithm", "MinimumAbundance", "CorrelationMinimum",
-    "PPMThreshold", "AddMAI", "IsotopeRange", "PlottingWindow", "AdductLabels", "AdductMasses")
-  if (!all(Settings$Parameter %in% RequiredRow)) {
+  RequiredRow <- c("MZRange", "NoiseFilter", "Charges", "AbundanceThreshold", 
+                   "CorrelationMinimum", "PPMThreshold", "AdductLabels", "AdductMasses",
+                   "AddMAI", "IsotopeMinimum", "PlottingWindow", "IsotopingAlgorithm")
+  if (!all(RequiredRow %in% Settings$Parameter)) {
     stop("Settings file is missing: ",
          paste0(RequiredRow[!RequiredRow  %in% Settings$Parameter], ", ", collapse = ""))
   }
@@ -230,16 +231,18 @@ run_isomatchms <- function(Biomolecules,
   # 1. Calculate Molecular Formula
   if (Messages) {message("Calculating molecular formulas...")}
 
+  # Add other adduct masses
   AdductMasses <- Settings[Settings$Parameter == "AdductMasses", "Default"] %>% stringr::str_split(",") %>% unlist() %>% as.numeric()
   names(AdductMasses) <- Settings[Settings$Parameter == "AdductLabels", "Default"] %>% stringr::str_split(",") %>% unlist()
-
+  
   MolForm <- calculate_molform(
     Biomolecules = Biomolecules,
     BioType = BioType,
     Identifiers = Identifiers,
     Charge = Settings[Settings$Parameter == "Charges", "Default"] %>% strsplit(",") %>% unlist() %>% as.numeric(),
     AddMostAbundantIsotope = Settings[Settings$Parameter == "AddMAI", "Default"] %>% unlist() %>% as.logical(),
-    AdductMasses = AdductMasses
+    AdductMasses = AdductMasses,
+    IsotopeAlgorithm = Settings[Settings$Parameter == "IsotopingAlgorithm", "Default"]
   )
   write.csv(MolForm, file.path(Path, "Molecular_Formulas.csv"), row.names = F, quote = F)
 
@@ -257,10 +260,9 @@ run_isomatchms <- function(Biomolecules,
   MatchedPeaks <- match_biomolecule_to_ms1(
     PeakData = FilteredData,
     MolecularFormulas = MolForm,
-    #MatchingAlgorithm = Settings[Settings$Parameter == "MatchingAlgorithm", "Default"] %>% unlist(),
-    #MinAbundance = Settings[Settings$Parameter == "MinimumAbundance", "Default"] %>% unlist() %>% as.numeric(),
-    PPMThreshold = Settings[Settings$Parameter == "PPMThreshold", "Default"] %>% as.numeric()
-    #IsotopeRange = Settings[Settings$Parameter == "IsotopeRange", "Default"] %>% strsplit(",") %>% unlist() %>% as.numeric()
+    AbundanceThreshold = Settings[Settings$Parameter == "AbundanceThreshold", "Default"] %>% as.numeric(),
+    PPMThreshold = Settings[Settings$Parameter == "PPMThreshold", "Default"] %>% as.numeric(),
+    IsotopeAlgorithm = Settings[Settings$Parameter == "IsotopingAlgorithm", "Default"],
   )
   if (is.null(MatchedPeaks)) {
     write.csv("No matches found", file.path(Path, "Matched_Isotope_Distributions.csv"), row.names = F, quote = F)

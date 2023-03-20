@@ -7,7 +7,7 @@
 match_biomolecule_to_ms1(
   PeakData,
   MolecularFormulas,
-  AbundanceThreshold = 0.5,
+  AbundanceThreshold = 50,
   PPMThreshold = 10,
   IsotopeMinimum = 3,
   IsotopeAlgorithm = "Rdisop"

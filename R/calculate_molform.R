@@ -17,6 +17,10 @@
 #'     parameter and shouldn't need to be changed for IsoMatchMS.
 #' @param AdductMasses (vector) A named vector of the masses of adducts to be tested. 
 #'     A max of 5 masses can be given. Proton Adducts are the default. Default is c(proton = 1.00727647).
+#' @param IsotopeAlgorithm (character) "isopat" uses the isopat package to calculate 
+#'     isotopes, while "Rdisop" uses the Rdisop package. Though more accurate, 
+#'     Rdisop has been known to crash on Windows computers when called iteratively 
+#'     more than 1000 times. Default is Rdisop, though isopat is an alternative.
 #'
 #' @details
 #' The data.table outputted by this function returns 8 columns.
@@ -79,7 +83,8 @@ calculate_molform <- function(Biomolecules,
                               Charge = 1,
                               AddMostAbundantIsotope = FALSE,
                               MinAbundance = 0.1,
-                              AdductMasses = c(proton = 1.00727647)) {
+                              AdductMasses = c(proton = 1.00727647),
+                              IsotopeAlgorithm = "Rdisop") {
 
   ##################
   ## CHECK INPUTS ##
@@ -194,7 +199,7 @@ calculate_molform <- function(Biomolecules,
         if (AddMostAbundantIsotope) {
 
           # Get the isotope profile
-          Isotopes <- pspecterlib::calculate_iso_profile(Formula, MinAbundance)
+          Isotopes <- pspecterlib::calculate_iso_profile(molform = Formula, algorithm = IsotopeAlgorithm, min_abundance = MinAbundance)
 
           # Get the most abundant isotope
           MAI <- Isotopes[which.max(Isotopes$abundance), "mass"] %>% unlist()

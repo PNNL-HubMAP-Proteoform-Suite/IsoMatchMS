@@ -6,7 +6,6 @@
 #' @param PeakData (peak_data object) A pspecterlib peak_data object or data.table with "M/Z" and "Intensity". Required.
 #' @param Ms1Match (IsoMatchMS1_MatchedPeaks) A IsoMatchMS1_MatchedPeaks object from match_biomolecule_to_ms1. Required.
 #' @param ID (numeric) The ID in the IsoMatchMS_MatchedPeaks object to plot. Required.
-#' @param Trace (boolean) Plot the mass spectrum as a continuous line rather than a series of peaks. Default is FALSE.
 #' @param Window (numeric) The -/+ m/z value on either side of the matched spectra plot. Default is 5 m/z.
 #'
 #' @returns (ggplot object) A ggplot object
@@ -51,7 +50,6 @@
 plot_Ms1Match <- function(PeakData,
                           Ms1Match,
                           ID,
-                          Trace = FALSE,
                           Window = 2) {
 
   ##################
@@ -116,7 +114,6 @@ plot_Ms1Match <- function(PeakData,
     Abundance = c(rep(0, nrow(AdjPeakData)), AdjPeakData$Abundance, rep(0, nrow(AdjPeakData)))
   ) %>%
     dplyr::arrange(`M/Z`)
-
 
   # Generate the plot
   plot <- ggplot2::ggplot() +

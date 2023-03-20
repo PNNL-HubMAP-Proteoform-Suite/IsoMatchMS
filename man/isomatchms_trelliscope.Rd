@@ -8,7 +8,7 @@ isomatchms_trelliscope(
   PeakData,
   Ms1Match,
   Path = file.path(.getDownloadsFolder(), "Ms1Match", "Trelliscope"),
-  MinCorrelationScore = -1,
+  MinCorrelationScore = 0.7,
   Window = 2
 )
 }

@@ -11,7 +11,8 @@ calculate_molform(
   Charge = 1,
   AddMostAbundantIsotope = FALSE,
   MinAbundance = 0.1,
-  AdductMasses = c(proton = 1.00727647)
+  AdductMasses = c(proton = 1.00727647),
+  IsotopeAlgorithm = "Rdisop"
 )
 }
 \arguments{
@@ -36,6 +37,11 @@ parameter and shouldn't need to be changed for IsoMatchMS.}
 
 \item{AdductMasses}{(vector) A named vector of the masses of adducts to be tested.
 A max of 5 masses can be given. Proton Adducts are the default. Default is c(proton = 1.00727647).}
+
+\item{IsotopeAlgorithm}{(character) "isopat" uses the isopat package to calculate
+isotopes, while "Rdisop" uses the Rdisop package. Though more accurate,
+Rdisop has been known to crash on Windows computers when called iteratively
+more than 1000 times. Default is Rdisop, though isopat is an alternative.}
 }
 \value{
 (IsoMatchMS_MolForm) A IsoMatchMS_MolForm object, which is a data.table containing the

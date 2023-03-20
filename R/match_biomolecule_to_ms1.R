@@ -90,7 +90,7 @@
 #' @export
 match_biomolecule_to_ms1 <- function(PeakData,
                                      MolecularFormulas,
-                                     AbundanceThreshold = 0.5,
+                                     AbundanceThreshold = 50,
                                      PPMThreshold = 10,
                                      IsotopeMinimum = 3,
                                      IsotopeAlgorithm = "Rdisop") {
@@ -193,7 +193,7 @@ match_biomolecule_to_ms1 <- function(PeakData,
       `Closest Index` = purrr::pmap(list(MZLower, MZUpper, Abundance), function(low, high, abun) {
         
         # Get peak range 
-        sub <- PeakRe[PeakRe$`M/Z` >= low & PeakRe$`M/Z` <= high & PeakRe$Abundance >= abun - (abun * AbundanceThreshold) & PeakRe$Abun <= abun + (abun * AbundanceThreshold) ,]
+        sub <- PeakRe[PeakRe$`M/Z` >= low & PeakRe$`M/Z` <= high & PeakRe$Abundance >= abun - (abun * AbundanceThreshold/100) & PeakRe$Abun <= abun + (abun * AbundanceThreshold/100) ,]
         
         # If no peaks, return 0
         if (nrow(sub) == 0) {return(NA)}
@@ -238,9 +238,9 @@ match_biomolecule_to_ms1 <- function(PeakData,
     AbundanceDF <- merge(OrigIsoDist[,c("M/Z", "Abundance")], IsoDist[,c("M/Z", "Abundance Experimental")], by = "M/Z", all.x = T)
     AbundanceDF$`Abundance Experimental`[is.na(AbundanceDF$`Abundance Experimental`)] <- 0
 
-    # Calculate Absolute Relative Error, Correlation, and Figure of merit
+    # Calculate Absolute Relative Error and Pearson Correlation
     IsoDist$`Absolute Relative Error` <- 1/nrow(AbundanceDF) * sum(abs(AbundanceDF$Abundance - AbundanceDF$`Abundance Experimental`) / AbundanceDF$Abundance)
-    IsoDist$Correlation <- stats::cor(AbundanceDF$`Abundance Experimental`, AbundanceDF$Abundance, method = "pearson")
+    IsoDist$`Pearson Correlation` <- stats::cor(AbundanceDF$`Abundance Experimental`, AbundanceDF$Abundance, method = "pearson")
 
     # Generate an identifier
     IsoDist$ID <- uuid::UUIDgenerate()
@@ -300,8 +300,7 @@ match_biomolecule_to_ms1 <- function(PeakData,
     dplyr::select(
       Identifiers, Adduct, `M/Z`, `Monoisotopic Mass`, Abundance, Isotope, `M/Z Search Window`, `M/Z Experimental`,
       `Intensity Experimental`, `Abundance Experimental`, `PPM Error`, `Absolute Relative Error`,
-      Correlation, `Figure of Merit`, Charge, Biomolecules, `Molecular Formula`,
-      `Most Abundant Isotope`, ID
+      `Pearson Correlation`, Charge, Biomolecules, `Molecular Formula`, `Most Abundant Isotope`, ID
      ) %>%
     unique()
 
