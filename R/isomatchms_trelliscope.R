@@ -125,21 +125,25 @@ isomatchms_trelliscope <- function(PeakData,
     dplyr::ungroup()
 
   # Generate trelliscope display
-  IsoMatchMSTrelli %>%
-    dplyr::select(RelCol) %>%
-    merge(MedianPPMError, by = "ID") %>%
-    dplyr::mutate(ID = as.numeric(ID)) %>%
-    unique() %>%
-    dplyr::mutate(
-      panel = trelliscopejs::map_plot(ID, function(x) {plot_Ms1Match(PeakData, Ms1Match, x, Window)})
-    ) %>%
-    trelliscopejs::trelliscope(
-      path = Path,
-      name = "MS1 Matches",
-      nrow = 1,
-      ncol = 1,
-      thumb = T,
-    )
+  suppressWarnings({
+    IsoMatchMSTrelli %>%
+      dplyr::select(RelCol) %>%
+      merge(MedianPPMError, by = "ID") %>%
+      dplyr::mutate(ID = as.numeric(ID)) %>%
+      unique() %>%
+      dplyr::mutate(
+        panel = trelliscopejs::map_plot(ID, function(x) {plot_Ms1Match(PeakData, Ms1Match, x, Window)})
+      ) %>%
+      dplyr::arrange(-`Pearson Correlation`) %>%
+      trelliscopejs::trelliscope(
+        path = Path,
+        name = "MS1 Matches",
+        nrow = 1,
+        ncol = 1,
+        thumb = T
+      )
+  })
+
 
 }
 
