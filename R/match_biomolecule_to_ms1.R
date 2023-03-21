@@ -79,10 +79,9 @@
 #'
 #' # Run algorithm
 #' match_biomolecule_to_ms1(
-#'    PeakData = PeakData,
-#'    MolecularFormula = MolForms_Test,
-#'    MatchingAlgorithm = "closest peak",
-#'    IsotopeRange = c(3,20)
+#'     PeakData = PeakData,
+#'     MolecularFormula = MolForms_Test,
+#'     IsotopeMinimum = 2
 #' )
 #'
 #' }
@@ -239,8 +238,8 @@ match_biomolecule_to_ms1 <- function(PeakData,
     AbundanceDF$`Abundance Experimental`[is.na(AbundanceDF$`Abundance Experimental`)] <- 0
 
     # Calculate Absolute Relative Error and Pearson Correlation
-    IsoDist$`Absolute Relative Error` <- 1/nrow(AbundanceDF) * sum(abs(AbundanceDF$Abundance - AbundanceDF$`Abundance Experimental`) / AbundanceDF$Abundance)
-    IsoDist$`Pearson Correlation` <- stats::cor(AbundanceDF$`Abundance Experimental`, AbundanceDF$Abundance, method = "pearson")
+    IsoDist$`Absolute Relative Error` <- round(1/nrow(AbundanceDF) * sum(abs(AbundanceDF$Abundance - AbundanceDF$`Abundance Experimental`) / AbundanceDF$Abundance), 8)
+    IsoDist$`Pearson Correlation` <- round(stats::cor(AbundanceDF$`Abundance Experimental`, AbundanceDF$Abundance, method = "pearson"), 8)
 
     # Generate an identifier
     IsoDist$ID <- uuid::UUIDgenerate()
@@ -250,7 +249,7 @@ match_biomolecule_to_ms1 <- function(PeakData,
     IsoDist$`Molecular Formula` <- MolForm
     IsoDist$Charge <- Charge
     IsoDist$`Mass Shift` <- MassShift
-    IsoDist$AdductMasses <- AdductMass
+    IsoDist$`Adduct Mass` <- AdductMass
 
     # Add missing columns and reorder
     return(IsoDist)
@@ -267,7 +266,7 @@ match_biomolecule_to_ms1 <- function(PeakData,
       MolForm = MolecularFormulas$`Molecular Formula`[it],
       Charge = MolecularFormulas$Charge[it],
       MassShift = MolecularFormulas$`Mass Shift`[it],
-      AdductMass = MolecularFormulas$Adduct[it]
+      AdductMass = MolecularFormulas$`Adduct Mass`[it]
     )
   }
   
@@ -290,17 +289,19 @@ match_biomolecule_to_ms1 <- function(PeakData,
   }
 
   # Subset matches
-  AllMatches <- merge(MolFormTable %>% dplyr::rename(Adduct = AdductMasses), 
+  AllMatches <- merge(MolFormTable, 
                       MolecularFormulas, 
-                      by = c("Monoisotopic Mass", "Mass Shift", "Molecular Formula", "Charge", "Adduct"), 
+                      by = c("Monoisotopic Mass", "Mass Shift", "Molecular Formula", "Charge", "Adduct Mass"), 
                       all.x = T) %>%
     dplyr::mutate(ID = as.numeric(as.factor(ID)))
 
   AllMatches <- AllMatches %>%
     dplyr::select(
-      Identifiers, Adduct, `M/Z`, `Monoisotopic Mass`, Abundance, Isotope, `M/Z Search Window`, `M/Z Experimental`,
-      `Intensity Experimental`, `Abundance Experimental`, `PPM Error`, `Absolute Relative Error`,
-      `Pearson Correlation`, Charge, Biomolecules, `Molecular Formula`, `Most Abundant Isotope`, ID
+      Identifiers, `Adduct Mass`, `Adduct Name`, `M/Z`, `Mass Shift`, `Monoisotopic Mass`, 
+      Abundance, Isotope, `M/Z Search Window`, `M/Z Experimental`,
+      `Intensity Experimental`, `Abundance Experimental`, `PPM Error`, 
+      `Absolute Relative Error`, `Pearson Correlation`, Charge, Biomolecules, 
+      `Molecular Formula`, `Most Abundant Isotope`, ID
      ) %>%
     unique()
 

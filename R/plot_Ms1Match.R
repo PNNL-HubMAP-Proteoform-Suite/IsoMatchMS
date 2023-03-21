@@ -32,9 +32,8 @@
 #' # Run algorithm
 #' IsoMatch <- match_biomolecule_to_ms1(
 #'   PeakData = PeakData,
-#'   MatchingAlgorithm = "closest peak",
 #'   MolecularFormula = MolForms_Test,
-#'   IsotopeRange = c(3, 20)
+#'   IsotopeMinimum = 3
 #' )
 #'
 #' # Make plot
@@ -105,7 +104,7 @@ plot_Ms1Match <- function(PeakData,
 
   # Calculate a scaled abundance
   Scale <- Ms1MatchSub[Ms1MatchSub$Abundance == max(Ms1MatchSub$Abundance), "Abundance Experimental"] / max(Ms1MatchSub$Abundance)
-  Ms1MatchSub$`Abundance Scaled` <- Ms1MatchSub$Abundance * Scale
+  Ms1MatchSub$`Abundance Scaled` <- round(Ms1MatchSub$Abundance * Scale, 4)
   Ms1MatchSub$Matched <- factor(ifelse(!is.na(Ms1MatchSub$`M/Z Experimental`), "Yes", "No"), levels = c("Yes", "No"))
 
   # Zero fill MS1 match

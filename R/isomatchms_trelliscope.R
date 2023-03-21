@@ -49,9 +49,8 @@
 #' # Run algorithm
 #' IsoMatch <- match_biomolecule_to_ms1(
 #'   PeakData = PeakData,
-#'   MatchingAlgorithm = "closest peak",
 #'   MolecularFormula = MolForms_Test,
-#'   IsotopeRange = c(3, 20)
+#'   IsotopeMinimum = 2
 #' )
 #'
 #' # Make the trelliscope display
@@ -111,14 +110,14 @@ isomatchms_trelliscope <- function(PeakData,
 
   # List relevant IsoMatchMS columns
   RelCol <- c("Identifier", "Absolute Relative Error", "Pearson Correlation", "Molecular Formula",
-              "Monoisotopic Mass", "Charge", "Adduct", "ID")
+              "Monoisotopic Mass", "Charge", "Adduct Name", "Adduct Mass", "Mass Shift", "ID")
 
   # Calculate Median PPM Error and Minimum MZ
   MedianPPMError <- IsoMatchMSTrelli %>%
     dplyr::select(ID, `PPM Error`, `M/Z`) %>%
     dplyr::group_by(ID) %>%
     dplyr::summarise(
-      `Median PPM Error` = median(`PPM Error`, na.rm = T),
+      `Median PPM Error` = round(median(`PPM Error`, na.rm = T), 8),
       `Minimum Matched M/Z` = min(`M/Z`),
       `Peaks Matched` = sum(!is.na(`PPM Error`))
     ) %>%

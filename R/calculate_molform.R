@@ -12,15 +12,15 @@
 #' @param Charge (numeric) The range of charges to test. Default is 1.
 #' @param AddMostAbundantIsotope (boolean) A flag to determine whether the Most Abundant Isotope (MAI) should be calculated for
 #'     every function. This parameter will slow down tool. Default is FALSE.
-#' @param MinAbundance (numeric) The minimum abundance (calculated intensity) permitted to be matched.
-#'     Default is 0.1, which is 0.1%. Used for most abundant isotope. This is a pspecterlib-specific
-#'     parameter and shouldn't need to be changed for IsoMatchMS.
 #' @param AdductMasses (vector) A named vector of the masses of adducts to be tested. 
 #'     A max of 5 masses can be given. Proton Adducts are the default. Default is c(proton = 1.00727647).
 #' @param IsotopeAlgorithm (character) "isopat" uses the isopat package to calculate 
 #'     isotopes, while "Rdisop" uses the Rdisop package. Though more accurate, 
 #'     Rdisop has been known to crash on Windows computers when called iteratively 
 #'     more than 1000 times. Default is Rdisop, though isopat is an alternative.
+#' @param MinAbundance (numeric) The minimum abundance (calculated intensity) permitted to be matched.
+#'     Default is 0.1, which is 0.1%. Used for most abundant isotope. This is a pspecterlib-specific
+#'     parameter and shouldn't need to be changed for IsoMatchMS.
 #'
 #' @details
 #' The data.table outputted by this function returns 8 columns.
@@ -57,21 +57,24 @@
 #'    Biomolecules = "M.(S)[Acetyl]ATNNIAQARKLVEQLRIEAGIERIKVSKAASDLMSYCEQHARNDPLLVGVPASENPFKDK(KPCIIL)[-52.9879].",
 #'    BioType = "ProForma",
 #'    Identifiers = "O60262",
-#'    Charge = 1:3
+#'    Charge = 1:3,
+#'    AddMostAbundantIsotope = TRUE
 #' )
 #'
 #' # Run two examples with two charge states
 #' calculate_molform(
 #'    Biomolecules = c("M.SS[Methyl]S.V", "M.S[Methyl]S[22]S[23].V"),
 #'    BioType = "ProForma",
-#'    Charge = 1:2
+#'    Charge = 1:2,
 #' )
 #'
-#' # Run an example with molecular formulas
+#' # Run an example with molecular formulas and an adduct
 #' calculate_molform(
 #'    Biomolecules = c("C6H12O6", "C2H4O1"),
 #'    BioType = "Molecular Formula",
-#'    Identifiers = c("Glucose", "Acetyl")
+#'    Identifiers = c("Glucose", "Acetyl"),
+#'    AdductMasses = c(proton = 1.00727637, sodium = 22.989769),
+#'    AddMostAbundantIsotope = TRUE
 #' )
 #'
 #' }
@@ -82,9 +85,9 @@ calculate_molform <- function(Biomolecules,
                               Identifiers = NULL,
                               Charge = 1,
                               AddMostAbundantIsotope = FALSE,
-                              MinAbundance = 0.1,
                               AdductMasses = c(proton = 1.00727647),
-                              IsotopeAlgorithm = "Rdisop") {
+                              IsotopeAlgorithm = "Rdisop",
+                              MinAbundance = 0.1) {
 
   ##################
   ## CHECK INPUTS ##
@@ -162,7 +165,7 @@ calculate_molform <- function(Biomolecules,
   ## RUN ITERATOR ##
   ##################
 
-  .calculate_molform_iterator <- function(Biomolecule, Name, Charge, AdductMass) {
+  .calculate_molform_iterator <- function(Biomolecule, Name, Charge, AdductMass, AdductName) {
 
     #######################################
     ## GET MODIFICATION NAMES AND MASSES ##
@@ -207,12 +210,12 @@ calculate_molform <- function(Biomolecules,
 
         }
 
-
         # Generate data table
         IsoMatchMS_MolForm <- data.table::data.table(
           "Biomolecules" = Biomolecule,
           "Identifiers" = Name,
-          "Adduct" = AdductMass,
+          "Adduct Name" = AdductName,
+          "Adduct Mass" = AdductMass,
           "Charge" = Charge,
           "Molecular Formula" = MolForm,
           "Mass Shift" = MassChanges,
@@ -270,7 +273,7 @@ calculate_molform <- function(Biomolecules,
       if (AddMostAbundantIsotope) {
 
         # Get the isotope profile
-        Isotopes <- pspecterlib::calculate_iso_profile(Formula, MinAbundance)
+        Isotopes <- pspecterlib::calculate_iso_profile(molform = Formula, algorithm = IsotopeAlgorithm, min_abundance = MinAbundance)
 
         # Get the most abundant isotope
         MAI <- Isotopes[which.max(Isotopes$abundance), "mass"] %>% unlist()
@@ -292,7 +295,8 @@ calculate_molform <- function(Biomolecules,
       IsoMatchMS_MolForm <- data.table::data.table(
         "Biomolecules" = Biomolecule,
         "Identifiers" = Name,
-        "Adduct" = AdductMass,
+        "Adduct Name" = AdductName,
+        "Adduct Mass" = AdductMass,
         "Charge" = Charge,
         "Molecular Formula" = MolForm,
         "Mass Shift" = sum(MassChanges),
@@ -317,7 +321,7 @@ calculate_molform <- function(Biomolecules,
       if (AddMostAbundantIsotope) {
 
         # Get the isotope profile
-        Isotopes <- pspecterlib::calculate_iso_profile(Formula, MinAbundance)
+        Isotopes <- pspecterlib::calculate_iso_profile(molform = Formula, algorithm = IsotopeAlgorithm, min_abundance = MinAbundance)
 
         # Get the most abundant isotope
         MAI <- Isotopes[which.max(Isotopes$abundance), "mass"] %>% unlist()
@@ -328,7 +332,8 @@ calculate_molform <- function(Biomolecules,
       IsoMatchMS_MolForm <- data.table::data.table(
         "Biomolecules" = Biomolecule,
         "Identifiers" = Name,
-        "Adduct" = AdductMass,
+        "Adduct Name" = AdductName,
+        "Adduct Mass" = AdductMass,
         "Charge" = Charge,
         "Molecular Formula" = Biomolecule,
         "Mass Shift" = 0,
@@ -353,19 +358,34 @@ calculate_molform <- function(Biomolecules,
 
   # Adding the AdductMasses as a column, creating a row for every combo of Protein, Charge, and AdductMass
   Pre_MolForms$AdductMasses <- rep(as.numeric(AdductMasses), times = nrow(Pre_MolForms)/length(AdductMasses))
+  
+  # Add names
+  Pre_MolForms$AdductNames <- rep(names(AdductMasses), times = nrow(Pre_MolForms)/length(AdductMasses))
 
   # Implement parallel computing for speed
-  doParallel::registerDoParallel(parallel::detectCores())
-
-  # Collect results
-  All_MolForms <- foreach(it = 1:nrow(Pre_MolForms), .combine = "rbind") %dopar% {
+  #doParallel::registerDoParallel(parallel::detectCores())
+  #
+  ## Collect results
+  #All_MolForms <- foreach(it = 1:nrow(Pre_MolForms), .combine = "rbind") %dopar% {
+  #  .calculate_molform_iterator(
+  #    Biomolecule = Pre_MolForms$Pform[it],
+  #    Name = Pre_MolForms$theName[it],
+  #    Charge = Pre_MolForms$ChargeValue[it],
+  #    AdductMass = Pre_MolForms$AdductMasses[it],
+  #    AdductName = Pre_MolForms$AdductNames[it]
+  #  )
+  #}
+  
+  # Include an lapply option for debugging
+  All_MolForms <- do.call(rbind, lapply(1:nrow(Pre_MolForms), function(it) {
     .calculate_molform_iterator(
       Biomolecule = Pre_MolForms$Pform[it],
       Name = Pre_MolForms$theName[it],
       Charge = Pre_MolForms$ChargeValue[it],
-      AdductMass = Pre_MolForms$AdductMasses[it]
+      AdductMass = Pre_MolForms$AdductMasses[it],
+      AdductName = Pre_MolForms$AdductNames[it]
     )
-  }
+  }))
 
   # Add class
   class(All_MolForms) <- c("IsoMatchMS_MolForm", class(All_MolForms))

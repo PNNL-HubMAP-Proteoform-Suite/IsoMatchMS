@@ -49,8 +49,7 @@ pull_modifications_from_mzid <- function(IDPath) {
   ######################
   ## READ THE ID FILE ##
   ######################
-
-
+  
   # Open the identification file
   ID <- mzR::openIDfile(IDPath)
 
@@ -101,6 +100,10 @@ pull_modifications_from_mzid <- function(IDPath) {
     # Return results
     return(Proforma_DF)
 
+  } else {
+    
+    return(Proforma_DF)
+    
   }
 
 }

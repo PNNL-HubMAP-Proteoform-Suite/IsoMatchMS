@@ -98,10 +98,9 @@ PeakData <- pspecterlib::make_peak_data(
 
 # Run algorithm
 match_biomolecule_to_ms1(
-   PeakData = PeakData,
-   MolecularFormula = MolForms_Test,
-   MatchingAlgorithm = "closest peak",
-   IsotopeRange = c(3,20)
+    PeakData = PeakData,
+    MolecularFormula = MolForms_Test,
+    IsotopeMinimum = 2
 )
 
 }

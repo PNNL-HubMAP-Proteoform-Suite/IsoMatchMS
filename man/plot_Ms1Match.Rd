@@ -44,9 +44,8 @@ PeakData <- pspecterlib::make_peak_data(
 # Run algorithm
 IsoMatch <- match_biomolecule_to_ms1(
   PeakData = PeakData,
-  MatchingAlgorithm = "closest peak",
   MolecularFormula = MolForms_Test,
-  IsotopeRange = c(3, 20)
+  IsotopeMinimum = 3
 )
 
 # Make plot
