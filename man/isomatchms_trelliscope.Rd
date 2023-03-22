@@ -13,15 +13,15 @@ isomatchms_trelliscope(
 )
 }
 \arguments{
-\item{PeakData}{A pspecterlib peak_data object or data.table with "M/Z" and "Intensity". Required.}
+\item{PeakData}{(peak_data object) A pspecterlib or data.table with "M/Z" and "Intensity". Required.}
 
-\item{Ms1Match}{A IsoMatchMS_MatchedPeaks class object from match_full_seq_ms1. Required.}
+\item{Ms1Match}{(IsoMatchMS_MatchedPeaks object) object from match_full_seq_ms1. Required.}
 
-\item{Path}{The base directory of the trelliscope application. Default is Downloads/Ms1Match.}
+\item{Path}{(character) The base directory of the trelliscope application. Default is Downloads/Ms1Match.}
 
-\item{MinCorrelationScore}{The minimum correlation score to plot. Default is 0.7.}
+\item{MinCorrelationScore}{(numeric) The minimum correlation score to plot. Default is 0.7.}
 
-\item{Window}{The -/+ m/z value on either side of the matched spectra plot. Default is 2 m/z.}
+\item{Window}{(numeric) The -/+ m/z value on either side of the matched spectra plot. Default is 2 m/z.}
 }
 \value{
 An html trelliscope display
@@ -54,9 +54,8 @@ PeakData <- pspecterlib::make_peak_data(
 # Run algorithm
 IsoMatch <- match_biomolecule_to_ms1(
   PeakData = PeakData,
-  MatchingAlgorithm = "closest peak",
   MolecularFormula = MolForms_Test,
-  IsotopeRange = c(3, 20)
+  IsotopeMinimum = 2
 )
 
 # Make the trelliscope display

@@ -14,29 +14,29 @@ create_proforma(
 )
 }
 \arguments{
-\item{Sequence}{A character vector containing the "Sequence" column from MSPathFinder,
+\item{Sequence}{(character) vector containing the "Sequence" column from MSPathFinder,
 ProSight, or pTop. Required.}
 
-\item{Modifications}{A character vector indicating the "Modifications" column
+\item{Modifications}{(character) vector containing the "Modifications" column
 from MSPathFinder, the "PTMs" column from ProSight, or the "PTMs" column from
 pTop. Must be the same length as Sequence. If there is no modification, use a blank string. Required.}
 
-\item{Tool}{A string indicating which tool was used. Acceptable inputs are "MSPathFinder".
+\item{Tool}{(character) indicates which tool was used. Acceptable inputs are "MSPathFinder".
 "ProSight", or "pTop". Required.}
 
-\item{ConversionList}{A list to convert ProSight modifications to
+\item{ConversionList}{(list) used to convert ProSight modifications to
 ProForma format. See example code and the pspecter modifications glossary with
 read.csv(system.file("extdata", "Unimod_v20220602.csv", package = "pspecterlib")). Only
 required for ProSight modifications.}
 
-\item{Scan}{A numeric vector containing the scan numbers. Must be the same length
+\item{Scan}{(numeric) vector containing the scan numbers. Must be the same length
 as Sequence. Optional.}
 
-\item{Protein}{A character vector containing the protein names. Must be the same
+\item{Protein}{(character) vector containing the protein names. Must be the same
 length as Sequence. Optional.}
 }
 \value{
-Returns a data.frame of scan numbers, proforma strings, and protein names.
+(data.frame) Returns a data.frame of scan numbers, proforma strings, and protein names.
 Note that all unmodified sequences are included as well.
 }
 \description{
@@ -61,7 +61,7 @@ create_proforma(
    Sequence = c("(49)M(37)SGRGKQG", "SG(67)RGKQGGKARAKAKSRSSRAG", "TEST"),
    Modifications = c("N-acetyl-L-methionine (49), O-phospho-L-serine (37)", "omega-N,omega-N'-dimethyl-L-arginine (67)", ""),
    Tool = "ProSight",
-   ConversionList = list("N-acetyl-L-methionine" = "Acetyl", "O-phospho-L-serine" = "Phospho", 
+   ConversionList = list("N-acetyl-L-methionine" = "Acetyl", "O-phospho-L-serine" = "Phospho",
                          "omega-N,omega-N'-dimethyl-L-arginine" = "DiMethyl")
 )
 

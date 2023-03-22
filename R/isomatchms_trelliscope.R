@@ -19,11 +19,11 @@
 #'    the plots are generated with the plot_Ms1Match function, and the cognostics
 #'    are: Identifiers, Absolute Relative Error, Correlation, Charge, Biomolecules, and ID.
 #'
-#' @param PeakData A pspecterlib peak_data object or data.table with "M/Z" and "Intensity". Required.
-#' @param Ms1Match A IsoMatchMS_MatchedPeaks class object from match_full_seq_ms1. Required.
-#' @param Path The base directory of the trelliscope application. Default is Downloads/Ms1Match.
-#' @param MinCorrelationScore The minimum correlation score to plot. Default is 0.7.
-#' @param Window The -/+ m/z value on either side of the matched spectra plot. Default is 2 m/z.
+#' @param PeakData (peak_data object) A pspecterlib or data.table with "M/Z" and "Intensity". Required.
+#' @param Ms1Match (IsoMatchMS_MatchedPeaks object) object from match_full_seq_ms1. Required.
+#' @param Path (character) The base directory of the trelliscope application. Default is Downloads/Ms1Match.
+#' @param MinCorrelationScore (numeric) The minimum correlation score to plot. Default is 0.7.
+#' @param Window (numeric) The -/+ m/z value on either side of the matched spectra plot. Default is 2 m/z.
 #'
 #' @returns An html trelliscope display
 #'
@@ -49,9 +49,8 @@
 #' # Run algorithm
 #' IsoMatch <- match_biomolecule_to_ms1(
 #'   PeakData = PeakData,
-#'   MatchingAlgorithm = "closest peak",
 #'   MolecularFormula = MolForms_Test,
-#'   IsotopeRange = c(3, 20)
+#'   IsotopeMinimum = 2
 #' )
 #'
 #' # Make the trelliscope display
@@ -62,10 +61,10 @@
 #'
 #' @export
 isomatchms_trelliscope <- function(PeakData,
-                                    Ms1Match,
-                                    Path = file.path(.getDownloadsFolder(), "Ms1Match", "Trelliscope"),
-                                    MinCorrelationScore = 0.7,
-                                    Window = 2) {
+                                   Ms1Match,
+                                   Path = file.path(.getDownloadsFolder(), "Ms1Match", "Trelliscope"),
+                                   MinCorrelationScore = 0.7,
+                                   Window = 2) {
 
   ##################
   ## CHECK INPUTS ##
@@ -102,43 +101,48 @@ isomatchms_trelliscope <- function(PeakData,
   # Convert IsoMatchMS class
   IsoMatchMSTrelli <- Ms1Match
   class(IsoMatchMSTrelli) <- c("data.table", "data.frame")
-  IsoMatchMSTrelli <- IsoMatchMSTrelli %>% dplyr::rename(Identifier = Identifiers, Biomolecule = Biomolecules)
+  IsoMatchMSTrelli <- IsoMatchMSTrelli %>% dplyr::select(-Biomolecules)
+  IsoMatchMSTrelli <- IsoMatchMSTrelli %>% dplyr::rename(Identifier = Identifiers)
 
   # Filter IsoMatchMS down to the correlation score
   IsoMatchMSTrelli <- IsoMatchMSTrelli %>%
-    dplyr::filter(Correlation >= MinCorrelationScore)
+    dplyr::filter(`Pearson Correlation` >= MinCorrelationScore)
 
   # List relevant IsoMatchMS columns
-  RelCol <- c("Identifier", "Absolute Relative Error", "Correlation", "Molecular Formula",
-              "Monoisotopic Mass", "Figure of Merit", "Charge", "Biomolecule", "ID")
+  RelCol <- c("Identifier", "Absolute Relative Error", "Pearson Correlation", "Molecular Formula",
+              "Monoisotopic Mass", "Charge", "Adduct Name", "Adduct Mass", "Mass Shift", "ID")
 
   # Calculate Median PPM Error and Minimum MZ
   MedianPPMError <- IsoMatchMSTrelli %>%
     dplyr::select(ID, `PPM Error`, `M/Z`) %>%
     dplyr::group_by(ID) %>%
     dplyr::summarise(
-      `Median PPM Error` = median(`PPM Error`),
+      `Median PPM Error` = round(median(`PPM Error`, na.rm = T), 8),
       `Minimum Matched M/Z` = min(`M/Z`),
-      `Peaks Matched` = length(`M/Z`)
+      `Peaks Matched` = sum(!is.na(`PPM Error`))
     ) %>%
     dplyr::ungroup()
-  
+
   # Generate trelliscope display
-  IsoMatchMSTrelli %>%
-    dplyr::select(RelCol) %>%
-    merge(MedianPPMError, by = "ID") %>%
-    dplyr::mutate(ID = as.factor(ID)) %>%
-    unique() %>%
-    dplyr::mutate(
-      panel = trelliscopejs::map_plot(ID, function(x) {plot_Ms1Match(PeakData, Ms1Match, x, Window, Trace = FALSE)})
-    ) %>%
-    trelliscopejs::trelliscope(
-      path = Path,
-      name = "MS1 Matches",
-      nrow = 1,
-      ncol = 1,
-      thumb = T,
-    )
+  suppressWarnings({
+    IsoMatchMSTrelli %>%
+      dplyr::select(RelCol) %>%
+      merge(MedianPPMError, by = "ID") %>%
+      dplyr::mutate(ID = as.numeric(ID)) %>%
+      unique() %>%
+      dplyr::mutate(
+        panel = trelliscopejs::map_plot(ID, function(x) {plot_Ms1Match(PeakData, Ms1Match, x, Window)})
+      ) %>%
+      dplyr::arrange(-`Pearson Correlation`) %>%
+      trelliscopejs::trelliscope(
+        path = Path,
+        name = "MS1 Matches",
+        nrow = 1,
+        ncol = 1,
+        thumb = T
+      )
+  })
+
 
 }
 

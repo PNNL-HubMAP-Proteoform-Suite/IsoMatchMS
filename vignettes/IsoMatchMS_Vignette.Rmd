@@ -29,10 +29,10 @@ suppressWarnings({
 
 # What is IsoMatchMS?
 
-IsoMatchMS is a package designed to match isotope profiles to MS1 spectra, allowing for
+IsoMatchMS was designed to match biomolecule isotope profiles to spectra, allowing for
 the characterization of high-quality biomolecule annotations. Best isotope matches are
-then visualized in a [trelliscope](https://github.com/hafen/trelliscopejs) display,
-which allows for easy sorting and comparison of isotope matches found in the data. 
+visualized in a [trelliscope](https://github.com/hafen/trelliscopejs) display,
+which allows for easy sorting of isotope matches by score. 
 
 ![Alt text](./Graphical_Abstract.png "Graphical Abstract of the IsoMatchMS Package")
 
@@ -61,16 +61,19 @@ Below, the .csv containing protein information is loaded in, along with the pre-
 pspecterlib peak_data object. Further instructions on how to make this can be found 
 in Section 2.3. 
 
+Notice that in most cases, the most abundant isotope is not the monoisotopic mass 
+(indicated by the blue dashed line).
+
 ```{r, eval=FALSE}
 # Read in the protein test data
 protein_data <- read.csv(system.file("extdata", "Intact_Proteins_List_Short.csv", package = "IsoMatchMS"))
-peak_data <- readRDS(system.file("extdata", "Intact_PeakData.RDS", package = "IsoMatchMS"))
+intact_peak_data <- readRDS(system.file("extdata", "Intact_PeakData.RDS", package = "IsoMatchMS"))
 
 # Run the IsoMatchMS wrapper function
 run_isomatchms(
     Biomolecules = protein_data$Proteoform,
     BioType = "ProForma",
-    SummedSpectra = peak_data,
+    SummedSpectra = intact_peak_data,
     SettingsFile = system.file("extdata", "Intact_Protein_Defaults.xlsx", package = "IsoMatchMS"),
     Path = "~/Downloads/Small_Intact_Test",
     Identifiers = protein_data$Protein.accession
@@ -81,7 +84,8 @@ run_isomatchms(
 
 The following shows an example use of the `run_isomatchms()` function with the 
 peptides test data (also known as bottom-up proteomics). In other words, the
-proteins have been digested into peptides. 
+proteins have been digested into peptides. The most abundant isotope tends to
+be the monoisotopic mass.
 
 ```{r, eval=FALSE}
 # Read in the peptide test data 
@@ -96,6 +100,27 @@ run_isomatchms(
     SettingsFile = system.file("extdata", "Peptides_Defaults.xlsx", package = "IsoMatchMS"),
     Path = "~/Downloads/Small_Peptides_Test",
     Identifiers = peptide_data$Protein
+)
+```
+
+## Glycan Example
+
+Similar to the peptide example, the most abundant isotope tends to be the 
+monoisotopic mass. 
+
+```{r, eval=FALSE}
+# Read in the glycan test data 
+glycans_data <- read.xlsx(system.file("extdata", "Glycans_List_Short.xlsx", package = "IsoMatchMS"), 1)
+glycans_peak_data <- readRDS(system.file("extdata", "Glycans_PeakData.RDS", package = "IsoMatchMS"))
+
+# Run the IsoMatchMS wrapper function
+run_isomatchms(
+    Biomolecules = glycans_data$formula,
+    BioType = "Molecular Formula",
+    SummedSpectra = glycans_peak_data,
+    SettingsFile = system.file("extdata", "Glycans_Defaults.xlsx", package = "IsoMatchMS"),
+    Path = "~/Downloads/Small_Glycans_Test",
+    Identifiers = glycans_data$name
 )
 ```
 
@@ -122,7 +147,7 @@ from an .mzid file by using the `pull_modifications_from_mzid` function.
 The following examples show how to use the `create_proforma` function on data from 
 the MSPathFinder, ProSight, and pTop. 
 
-```{r}
+```{r MSPathFinder}
 # MSPathFinder example with scan and protein
 create_proforma(
    Sequence = c("GRGKTGGKARAKAKSRSSRAGLQFPVGRVHRL", "KKTRIIPRHLQLAIRNDEELNKLLGGVTIAY", "TEST"),
@@ -131,7 +156,9 @@ create_proforma(
    Scan = c(3334, 3336, 3338),
    Protein = c("Protein33", "Protein45", "Protein47")
 )
+```
 
+```{r ProSight}
 # ProSight example without scan and protein
 create_proforma(
    Sequence = c("(49)M(37)SGRGKQG", "SG(67)RGKQGGKARAKAKSRSSRAG", "TEST"),
@@ -140,7 +167,9 @@ create_proforma(
    ConversionList = list("N-acetyl-L-methionine" = "Acetyl", "O-phospho-L-serine" = "Phospho", 
                          "omega-N,omega-N'-dimethyl-L-arginine" = "DiMethyl")
 )
+```
 
+```{r pTop}
 # pTop Example
 create_proforma(
    Sequence = c("SGRGKGGKGLGKGGAKRHRKVLRDNIQGITKPAIRRL", "TEST", "PEPSRSTPAPKKGSKKAITKAQKKDGKKRKRGRKESYSIYV"),
@@ -207,7 +236,7 @@ This is an example of reading in a summed mzML file. First, a scan_metadata obje
 using the `pspecterlib::get_scan_metadata` function. That output is then used in the 
 `pspecterlib::get_peak_data` function to create the peak_data object
 
-```{r, eval=FALSE}
+```{r}
 # Extract the scan metadata
 scan_data <- pspecterlib::get_scan_metadata(
   MSPath = system.file("extdata", "Intact_Protein_Summed_MS1.mzML", package = "IsoMatchMS")
@@ -217,8 +246,10 @@ scan_data <- pspecterlib::get_scan_metadata(
 peak_data <- pspecterlib::get_peak_data(
   ScanMetadata = scan_data, 
   ScanNumber = 1, 
-  MinAbundance = 0
+  MinAbundance = 0.1
 )
+
+head(peak_data)
 ```
 
 In this example, MZ and Intensity data are read in from a .csv, and the vectors
@@ -233,6 +264,8 @@ peak_data <- pspecterlib::make_peak_data(
   MZ = pd_df$M.Z, 
   Intensity = pd_df$Intensity
 )
+
+head(peak_data)
 ```
 
 ## Molecular Formulas
@@ -241,11 +274,10 @@ This step, as for the remainder of the functions outlined in the remainder of th
 vignette, are wrapped in the `run_proteomatch` function. Return to section 1 to see 
 examples of running this function.
 
-Regardless of the data containing molecular formulas or ProForma strings, the `calculate_molform()` 
-function is used to create a IsoMatchMS_MolForm class object. If ProForma strings 
-are the input for this function, the molecular formulas are calculated. Regardless of format, 
-the IsoMatchMS_MolForm object will be a data.table with 8 columns: Biomolecules, 
-Identifiers, Adducts, Charges, Molecular Formulas, Mass Shifts, Monoisotopic Masses, and
+Even if molecular formulas are provided, the `calculate_molform()` 
+function is required to create a IsoMatchMS_MolForm class object. Regardless of format, 
+the IsoMatchMS_MolForm object will be a data.table with 9 columns: Biomolecules, 
+Identifiers, Adduct Names, Adduct Masses, Charges, Molecular Formulas, Mass Shifts, Monoisotopic Masses, and
 Most Abundant Isotopes. 
 
 All of these values are calculated from a combination of the ProForma strings or molecular formulas,
@@ -322,8 +354,7 @@ PeakData <- pspecterlib::make_peak_data(
 Matches <- match_biomolecule_to_ms1(
    PeakData = PeakData,
    MolecularFormula = MolForms_Test,
-   MatchingAlgorithm = "closest peak",
-   IsotopeRange = c(3,20)
+   IsotopeMinimum = 2
 )
 
 Matches %>% knitr::kable()
@@ -340,15 +371,6 @@ $$
 $$
 where n is the number of peaks matched, $A_R$ is the reference abundance, and $A_E$ is the
 experimental abundance. 
-
-The equation for the Figure of Merit is: 
-
-$$
-\frac{n}{\sum{(A_R-A_E)^2 + NF}}
-$$
-
-where n is the number of peaks matched, $A_R$ is the reference abundance, $A_E$
-is the experimental abundance, and $NF$ is the noise filter set by the user. 
 
 ## Plot Results 
 
@@ -373,6 +395,25 @@ isomatchms_trelliscope(
   Path = "~/Downloads/TrelliTest"
 )
 ```
+
+# Other Features 
+
+## Adducts
+
+In the `calculate_molform()` function, users may supply a named vector of adduct
+masses to test out different adducts. For example: 
+
+```{r}
+calculate_molform(
+   Biomolecules = c("C6H12O6", "C2H4O1"),
+   BioType = "Molecular Formula",
+   Identifiers = c("Glucose", "Acetyl"),
+   AdductMasses = c(proton = 1.00727637, sodium = 22.989769),
+   AddMostAbundantIsotope = TRUE
+) %>% knitr::kable()
+```
+
+
 
 
 

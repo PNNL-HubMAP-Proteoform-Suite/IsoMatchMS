@@ -7,36 +7,36 @@
 match_biomolecule_to_ms1(
   PeakData,
   MolecularFormulas,
-  MatchingAlgorithm,
-  MinAbundance = 0.1,
+  AbundanceThreshold = 50,
   PPMThreshold = 10,
-  IsotopeRange = c(5, 20),
-  ProtonMass = 1.00727647
+  IsotopeMinimum = 3,
+  IsotopeAlgorithm = "Rdisop"
 )
 }
 \arguments{
-\item{PeakData}{A pspecterlib peak_data object made with "make_peak_data" or
+\item{PeakData}{(peak_data object) from pspecterlib, made with "make_peak_data" or
 extracted from a raw or mzML file with "get_peak_data." Use of centroided data
 is recommended, but not required.}
 
-\item{MolecularFormulas}{A "IsoMatchMS_MolForm" object with Molecular Formulas,
+\item{MolecularFormulas}{(IsoMatchMS_MolForm object) object with Molecular Formulas,
 Mass Shifts, and Charges.}
 
-\item{MatchingAlgorithm}{Either "closest peak" or "highest abundance" where the "closest
-peak" implementation chooses the peak closest to the true M/Z value within the PPM window
-and "highest abundance" chooses the highest intensity peak within the PPM window. "closest peak"
-is recommended for peaks that have been peak picked with an external tool,
-and "highest abundance" is recommended for noisy datasets or those with many peaks.}
+\item{AbundanceThreshold}{(numeric) The +/- percent abundance an isotope peak
+can vary and still be considered a match. For example, if the true isotope peak
+is 3 but the measured value is 4, an AbundanceThreshold of 50\% will consider
+that peak a true match if it ranges between 1.5 - 4.5. Default is 50.}
 
-\item{MinAbundance}{The minimum abundance (calculated intensity) permitted
-to be matched. Default is 0.1, which is 0.1\%.}
+\item{PPMThreshold}{(numeric) The window in PPM to search for peaks around the true peak. Required. Default is 10 ppm.}
 
-\item{PPMThreshold}{The window in PPM to search for peaks around the true peak. Required. Default is 10 ppm.}
+\item{IsotopeMinimum}{(numeric) The minimum number of isotopes to consider. Default is 3.}
 
-\item{IsotopeRange}{The minimum and maximum number of isotopes to consider. Default is c(3,20).}
+\item{IsotopeAlgorithm}{(character) "isopat" uses the isopat package to calculate isotopes,
+while "Rdisop" uses the Rdisop package. Though more accurate, Rdisop has been known
+to crash on Windows computers when called iteratively more than 1000 times.
+Default is Rdisop, though isopat is an alternative.}
 }
 \value{
-A IsoMatchMS_MatchedPeaks object, which is a data.table containing the
+(IsoMatchMS_MatchedPeaks object) A IsoMatchMS_MatchedPeaks object, which is a data.table containing the
 Identifier, Adduct, M/Z, Intensity, Isotope, M/Z Search Window, Experimental M/Z,
 Experimental Intensity, PPM Error, Absolute Relative Error, Correlation,
 Charge, Biomolecule, and an ID.
@@ -85,7 +85,7 @@ ID \tab A unique ID for each Proteoform, Protein, and Charge combination used in
 # Run two examples with two charge states
 MolForms_Test <- calculate_molform(
    Biomolecules = c("M.SS[Methyl]S.V", "M.SS[6]S[7].V"),
-   BioType = "ProForma", 
+   BioType = "ProForma",
    Identifiers = c("Test1", "Test2"),
    Charge = 1:2
 )
@@ -98,10 +98,9 @@ PeakData <- pspecterlib::make_peak_data(
 
 # Run algorithm
 match_biomolecule_to_ms1(
-   PeakData = PeakData,
-   MolecularFormula = MolForms_Test,
-   MatchingAlgorithm = "closest peak",
-   IsotopeRange = c(3,20)
+    PeakData = PeakData,
+    MolecularFormula = MolForms_Test,
+    IsotopeMinimum = 2
 )
 
 }

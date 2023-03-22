@@ -10,35 +10,41 @@ calculate_molform(
   Identifiers = NULL,
   Charge = 1,
   AddMostAbundantIsotope = FALSE,
-  MinAbundance = 0.1,
-  AdductMasses = c(1.00727647)
+  AdductMasses = c(proton = 1.00727647),
+  IsotopeAlgorithm = "Rdisop",
+  MinAbundance = 0.1
 )
 }
 \arguments{
-\item{Biomolecules}{A vector of Molecular Formulas or ProForma strings (i.e. "M.AA\code{[}Acetyl\verb{]}AA\code{[}3.2\verb{]}.V").
+\item{Biomolecules}{(character) A vector of Molecular Formulas or ProForma strings (i.e. "M.AA\code{[}Acetyl\verb{]}AA\code{[}3.2\verb{]}.V").
 ProForma strings can be pulled from mzid files (MS-GF+, MSPathFinder)
 with pull_modifications_from_mzid, or made with create_proforma for MSPathFinder,
 ProSight, and pTop modifications. TopPIC proteoforms are provided as ProForma
 strings. Required.}
 
-\item{BioType}{A string indicating whether the Biomolecules are "ProForma" strings or "Molecular Formula". Required.}
+\item{BioType}{(character) A string indicating whether the Biomolecules are "ProForma" strings or "Molecular Formula". Required.}
 
-\item{Identifiers}{A vector of identifiers for each biomolecule (i.e. protein, glycan, etc.). Optional.}
+\item{Identifiers}{(character) A vector of identifiers for each biomolecule (i.e. protein, glycan, etc.). Optional.}
 
-\item{Charge}{The range of charges to test. Default is 1.}
+\item{Charge}{(numeric) The range of charges to test. Default is 1.}
 
-\item{AddMostAbundantIsotope}{A flag to determine whether the Most Abundant Isotope (MAI) should be calculated for
+\item{AddMostAbundantIsotope}{(boolean) A flag to determine whether the Most Abundant Isotope (MAI) should be calculated for
 every function. This parameter will slow down tool. Default is FALSE.}
 
-\item{MinAbundance}{The minimum abundance (calculated intensity) permitted to be matched.
+\item{AdductMasses}{(vector) A named vector of the masses of adducts to be tested.
+A max of 5 masses can be given. Proton Adducts are the default. Default is c(proton = 1.00727647).}
+
+\item{IsotopeAlgorithm}{(character) "isopat" uses the isopat package to calculate
+isotopes, while "Rdisop" uses the Rdisop package. Though more accurate,
+Rdisop has been known to crash on Windows computers when called iteratively
+more than 1000 times. Default is Rdisop, though isopat is an alternative.}
+
+\item{MinAbundance}{(numeric) The minimum abundance (calculated intensity) permitted to be matched.
 Default is 0.1, which is 0.1\%. Used for most abundant isotope. This is a pspecterlib-specific
 parameter and shouldn't need to be changed for IsoMatchMS.}
-
-\item{AdductMasses}{The masses of adducts to be tested. Proton Adducts are the default.
-Default is c(1.00727647).}
 }
 \value{
-A IsoMatchMS_MolForm object, which is a data.table containing the
+(IsoMatchMS_MolForm) A IsoMatchMS_MolForm object, which is a data.table containing the
 molecular formula, mass shift, monoisotopic mass, most abundant isotope,
 biomolecule identifier, and charge.
 }
@@ -52,7 +58,9 @@ Biomolecules \tab The provided biomolecule molecular formulas or proforma string
 \tab \cr
 Identifiers \tab The provided biomolecule identifier \cr
 \tab \cr
-Adduct \tab The provided adduct \cr
+Adduct Names \tab The provided adduct names \cr
+\tab \cr
+Adduct Masses \tab The provided adduct mass \cr
 \tab \cr
 Charge \tab The provided charges \cr
 \tab \cr
@@ -74,21 +82,24 @@ calculate_molform(
    Biomolecules = "M.(S)[Acetyl]ATNNIAQARKLVEQLRIEAGIERIKVSKAASDLMSYCEQHARNDPLLVGVPASENPFKDK(KPCIIL)[-52.9879].",
    BioType = "ProForma",
    Identifiers = "O60262",
-   Charge = 1:3
+   Charge = 1:3,
+   AddMostAbundantIsotope = TRUE
 )
 
 # Run two examples with two charge states
 calculate_molform(
    Biomolecules = c("M.SS[Methyl]S.V", "M.S[Methyl]S[22]S[23].V"),
    BioType = "ProForma",
-   Charge = 1:2
+   Charge = 1:2,
 )
 
-# Run an example with molecular formulas
+# Run an example with molecular formulas and an adduct
 calculate_molform(
    Biomolecules = c("C6H12O6", "C2H4O1"),
    BioType = "Molecular Formula",
-   Identifiers = c("Glucose", "Acetyl")
+   Identifiers = c("Glucose", "Acetyl"),
+   AdductMasses = c(proton = 1.00727637, sodium = 22.989769),
+   AddMostAbundantIsotope = TRUE
 )
 
 }
