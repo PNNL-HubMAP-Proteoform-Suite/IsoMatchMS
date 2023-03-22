@@ -29,7 +29,9 @@
 #' \tab \cr
 #' Identifiers \tab The provided biomolecule identifier \cr
 #' \tab \cr
-#' Adduct \tab The provided adduct \cr
+#' Adduct Names \tab The provided adduct names \cr
+#' \tab \cr
+#' Adduct Masses \tab The provided adduct masses \cr
 #' \tab \cr
 #' Charge \tab The provided charges \cr
 #' \tab \cr

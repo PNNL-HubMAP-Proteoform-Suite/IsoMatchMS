@@ -58,7 +58,9 @@ Biomolecules \tab The provided biomolecule molecular formulas or proforma string
 \tab \cr
 Identifiers \tab The provided biomolecule identifier \cr
 \tab \cr
-Adduct \tab The provided adduct \cr
+Adduct Names \tab The provided adduct names \cr
+\tab \cr
+Adduct Masses \tab The provided adduct mass \cr
 \tab \cr
 Charge \tab The provided charges \cr
 \tab \cr
