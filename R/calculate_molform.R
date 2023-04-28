@@ -186,9 +186,7 @@ calculate_molform <- function(Biomolecules,
         Formula <- pspecterlib::get_aa_molform(PTMs)
 
         # Format the molecular formula
-        MolForm <- Formula %>%
-          .[. > 0] %>%
-          paste0(names(.), ., collapse = "")
+        MolForm <- Formula %>% pspecterlib::collapse_molform()
 
         # There are no mass changes
         MassChanges <- 0
@@ -290,8 +288,7 @@ calculate_molform <- function(Biomolecules,
       }
 
       # Collapse the molecular formula
-      CleanedNames <- Formula[Formula > 0]
-      MolForm <- paste0(names(CleanedNames), CleanedNames, collapse = "")
+      MolForm <- Formula %>% pspecterlib::collapse_molform()
 
       # Generate data table
       IsoMatchMS_MolForm <- data.table::data.table(

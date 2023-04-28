@@ -270,7 +270,7 @@ run_isomatchms <- function(Biomolecules,
     return(NULL)
   }
   write.csv(MatchedPeaks, file.path(Path, "Matched_Isotope_Distributions.csv"), row.names = F, quote = F)
-
+  
   # 4. Make the trelliscope display
   if (Messages) {message("Generating trelliscope...")}
   isomatchms_trelliscope(
