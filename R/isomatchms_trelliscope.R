@@ -101,15 +101,14 @@ isomatchms_trelliscope <- function(PeakData,
   # Convert IsoMatchMS class
   IsoMatchMSTrelli <- Ms1Match
   class(IsoMatchMSTrelli) <- c("data.table", "data.frame")
-  IsoMatchMSTrelli <- IsoMatchMSTrelli %>% dplyr::select(-Biomolecules)
   IsoMatchMSTrelli <- IsoMatchMSTrelli %>% dplyr::rename(Identifier = Identifiers)
 
   # Filter IsoMatchMS down to the correlation score
   IsoMatchMSTrelli <- IsoMatchMSTrelli %>%
     dplyr::filter(`Pearson Correlation` >= MinCorrelationScore)
-
+  
   # List relevant IsoMatchMS columns
-  RelCol <- c("Identifier", "Absolute Relative Error", "Pearson Correlation", "Molecular Formula",
+  RelCol <- c("Biomolecules", "Identifier", "Absolute Relative Error", "Pearson Correlation", "Molecular Formula",
               "Monoisotopic Mass", "Charge", "Adduct Name", "Adduct Mass", "Mass Shift", "ID")
 
   # Calculate Median PPM Error and Minimum MZ

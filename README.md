@@ -13,3 +13,5 @@ This package includes support for:
 
 ## To install 
 `devtools::install_github("PNNL-HubMAP-Proteoform-Suite/IsoMatchMS")`
+
+To get started, read our vignette. 
