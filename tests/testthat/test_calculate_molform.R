@@ -73,18 +73,18 @@ test_that("testing molform calculation", {
   )
   
   
-  
-  ### Running Function ###
+  ### Function Tests ###
 
-  #testing peptide data
-  Pep_mols <- calculate_molform(Biomolecules = Peptide_data$Proteoform, BioType = "ProForma", Identifiers = Peptide_data$Protein)
+  # Testing peptide data
+  Pep_mols <- calculate_molform(Biomolecules = Peptide_data$Proteoform, BioType = "ProForma", Identifiers = Peptide_data$Protein, AddMostAbundantIsotope = TRUE)
   expect_true(inherits(Pep_mols, "IsoMatchMS_MolForm"))
-
-  #testing intact protein data
-  # Prot_mols <- calculate_molform(Biomolecules = Protein_data$Proteoform, BioType = "ProForma", Identifiers = Protein_data$Protein, AddMostAbundantIsotope = F)
-  # expect_true(inherits(Prot_mols, "ProteoMatch_MolForm"))
-
-  Prot_mols2 <- calculate_molform(Biomolecules = InMols$`Molecular Formula`, BioType = "Molecular Formula", Identifiers = Protein_data$Protein, AddMostAbundantIsotope = F)
+  
+  # Testing protein data
+  Prot_mols1 <- calculate_molform(Biomolecules = Protein_data$Proteoform, BioType = "ProForma", Identifiers = Protein_data$Protein.accession, AddMostAbundantIsotope = TRUE)
+  expect_true(inherits(Prot_mols1, "IsoMatchMS_MolForm"))
+  Prot_mols2 <- calculate_molform(Biomolecules = InMols$`Molecular Formula`, BioType = "Molecular Formula", Identifiers = Protein_data$Protein, AddMostAbundantIsotope = TRUE)
   expect_true(inherits(Prot_mols2, "IsoMatchMS_MolForm"))
+  Prot_mols3 <- calculate_molform(Biomolecules = InMols$`Molecular Formula`, BioType = "Molecular Formula", Identifiers = Protein_data$Protein, AddMostAbundantIsotope = FALSE)
+  expect_true(inherits(Prot_mols3, "IsoMatchMS_MolForm"))
   
 })

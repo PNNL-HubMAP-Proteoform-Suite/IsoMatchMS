@@ -245,9 +245,9 @@ calculate_molform <- function(Biomolecules,
       if (length(Modifications) > 0) {
 
         for (PTM in Modifications) {
-
+          
           # Extract formula
-          premolform <- Glossary[Glossary$Modification == PTM, c(4:ncol(Glossary))] %>%
+          premolform <- Glossary[Glossary$Modification == PTM, 4:ncol(Glossary)] %>%
             dplyr::select(colnames(.)[!is.na(.)]) %>%
             paste0(colnames(.), ., collapse = "")
 
