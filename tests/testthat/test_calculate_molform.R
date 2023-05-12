@@ -6,7 +6,7 @@ test_that("testing molform calculation", {
 
   Peptide_data <- read.csv(system.file("testdata", "Peptides_List_Short.csv", package = "IsoMatchMS"))
   Protein_data <- read.csv(system.file("testdata", "Intact_Proteins_List_Short.csv", package = "IsoMatchMS"))
-  InMols <- readRDS(system.file("testdata", "Intact_Molform.RDS", package = "IsoMatchMS"))
+  InMols <- readRDS(system.file("testdata", "Intact_Molforms.RDS", package = "IsoMatchMS"))
 
   ### Testing inputs ###
 
