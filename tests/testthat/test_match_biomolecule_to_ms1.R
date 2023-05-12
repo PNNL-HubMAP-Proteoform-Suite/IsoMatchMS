@@ -1,45 +1,36 @@
-context(test: match_proteoform_to_ms1)
+context(test: match_biomolecule_to_ms1)
 
 test_that("testing ms1 matching", {
 
   ### Download required test tiles ###
 
-  InPeakData <- readRDS(system.file("testdata", "Intact_PeakData.RDS", package = "ProteoMatch"))
-  PepPeakData <- readRDS(system.file("testdata", "Peptides_PeakData.RDS", package = "ProteoMatch"))
-  PepMolforms <- readRDS(system.file("testdata", "Peptides_Molform.RDS", package = "ProteoMatch"))
-  InMolforms <- readRDS(system.file("testdata", "Intact_Molform.RDS", package = "ProteoMatch"))
+  InPeakData <- readRDS(system.file("testdata", "Intact_PeakData.RDS", package = "IsoMatchMS"))
+  PepPeakData <- readRDS(system.file("testdata", "Peptides_PeakData.RDS", package = "IsoMatchMS"))
+  PepMolforms <- readRDS(system.file("testdata", "Peptides_Molform.RDS", package = "IsoMatchMS"))
+  InMolforms <- readRDS(system.file("testdata", "Intact_Molform.RDS", package = "IsoMatchMS"))
 
   ### Testing inputs ###
 
   expect_error(
-    match_proteoform_to_ms1(
+    match_biomolecule_to_ms1(
       PeakData = "Wrong",
-      MolecularFormulas = PepMolforms,
-      MatchingAlgorithm = "closest peak",
-      IsotopeRange = c(5, 20),
-      PPMThreshold = 10,
-      MinAbundance = 0.1,
+      MolecularFormulas = PepMolforms
     ),
     "PeakData must be a pspecterlib peak_data object."
   )
 
   expect_error(
-    match_proteoform_to_ms1(
+    match_biomolecule_to_ms1(
       PeakData = PepPeakData,
-      MolecularFormulas = "Wrong",
-      MatchingAlgorithm = "closest peak",
-      IsotopeRange = c(5, 20),
-      PPMThreshold = 10,
-      MinAbundance = 0.1,
+      MolecularFormulas = "Wrong"
     ),
     "MolecularFormula must be a ProteoMatch_MolForm object."
   )
 
   expect_error(
-    match_proteoform_to_ms1(
+    match_biomolecule_to_ms1(
       PeakData = PepPeakData,
       MolecularFormulas = PepMolforms,
-      MatchingAlgorithm = "closest peak",
       IsotopeRange = c(5, 20),
       PPMThreshold = 0,
       MinAbundance = 0.1,
@@ -48,10 +39,9 @@ test_that("testing ms1 matching", {
   )
 
   expect_error(
-    match_proteoform_to_ms1(
+    match_biomolecule_to_ms1(
       PeakData = PepPeakData,
       MolecularFormulas = PepMolforms,
-      MatchingAlgorithm = "closest peak",
       IsotopeRange = c(5, 20),
       PPMThreshold = "wrong",
       MinAbundance = 0.1,
@@ -60,10 +50,9 @@ test_that("testing ms1 matching", {
   )
 
   expect_error(
-    match_proteoform_to_ms1(
+    match_biomolecule_to_ms1(
       PeakData = PepPeakData,
       MolecularFormulas = PepMolforms,
-      MatchingAlgorithm = "closest peak",
       IsotopeRange = c(5, 20),
       PPMThreshold = 10,
       MinAbundance = 101,
@@ -72,10 +61,9 @@ test_that("testing ms1 matching", {
   )
 
   expect_error(
-    match_proteoform_to_ms1(
+    match_biomolecule_to_ms1(
       PeakData = PepPeakData,
       MolecularFormulas = PepMolforms,
-      MatchingAlgorithm = "closest peak",
       IsotopeRange = c(5, 20),
       PPMThreshold = 10,
       MinAbundance = "Wrong",
@@ -84,10 +72,9 @@ test_that("testing ms1 matching", {
   )
 
   expect_error(
-    match_proteoform_to_ms1(
+    match_biomolecule_to_ms1(
       PeakData = PepPeakData,
       MolecularFormulas = PepMolforms,
-      MatchingAlgorithm = "closest peak",
       IsotopeRange = c(5),
       PPMThreshold = 10,
       MinAbundance = 0.1,
@@ -96,7 +83,7 @@ test_that("testing ms1 matching", {
   )
 
   # expect_error(
-  #   match_proteoform_to_ms1(
+  #   match_biomolecule_to_ms1(
   #     PeakData = PepPeakData,
   #     MolecularFormulas = PepMolforms,
   #     MatchingAlgorithm = "closest peak",
@@ -110,10 +97,9 @@ test_that("testing ms1 matching", {
   ### Running Function ###
 
   #Peptide data with closest peak algorithm
-  PepMatches <- match_proteoform_to_ms1(
+  PepMatches <- match_biomolecule_to_ms1(
     PeakData = PepPeakData,
     MolecularFormulas = PepMolforms,
-    MatchingAlgorithm = "closest peak",
     IsotopeRange = c(5, 20),
     PPMThreshold = 10,
     MinAbundance = 0.1,
@@ -121,10 +107,9 @@ test_that("testing ms1 matching", {
   expect_true(inherits(PepMatches, "ProteoMatch_MatchedPeaks"))
 
   #Intact data with highest abundance algorithm
-  InMatches <- match_proteoform_to_ms1(
+  InMatches <- match_biomolecule_to_ms1(
     PeakData = InPeakData,
     MolecularFormulas = InMolforms,
-    MatchingAlgorithm = "highest abundance",
     IsotopeRange = c(5, 20),
     PPMThreshold = 10,
     MinAbundance = 0.1,
