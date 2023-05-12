@@ -8,7 +8,7 @@ test_that("testing summing ms1 spectra", {
 
   expect_error(
     sum_ms1_spectra(
-      mzMLPath = system.file("testdata", "Intact_Protein_Summed_MS1.mzML", package = "ProteoMatch"),
+      mzMLPath = system.file("testdata", "Intact_Protein_Summed_MS1.mzML", package = "IsoMatchMS"),
       PPM_Round = "a",
       MinimumAbundance = 0.01,
       Messages = FALSE
@@ -18,7 +18,7 @@ test_that("testing summing ms1 spectra", {
 
   expect_error(
     sum_ms1_spectra(
-      mzMLPath = system.file("testdata", "Intact_Protein_Summed_MS1.mzML", package = "ProteoMatch"),
+      mzMLPath = system.file("testdata", "Intact_Protein_Summed_MS1.mzML", package = "IsoMatchMS"),
       PPM_Round = 0,
       MinimumAbundance = 0.01,
       Messages = FALSE
@@ -28,7 +28,7 @@ test_that("testing summing ms1 spectra", {
 
   expect_error(
     sum_ms1_spectra(
-      mzMLPath = system.file("testdata", "Intact_Protein_Summed_MS1.mzML", package = "ProteoMatch"),
+      mzMLPath = system.file("testdata", "Intact_Protein_Summed_MS1.mzML", package = "IsoMatchMS"),
       PPM_Round = 5,
       MinimumAbundance = 101,
       Messages = FALSE
@@ -38,7 +38,7 @@ test_that("testing summing ms1 spectra", {
 
   expect_error(
     sum_ms1_spectra(
-      mzMLPath = system.file("testdata", "Intact_Protein_Summed_MS1.mzML", package = "ProteoMatch"),
+      mzMLPath = system.file("testdata", "Intact_Protein_Summed_MS1.mzML", package = "IsoMatchMS"),
       PPM_Round = 5,
       MinimumAbundance = 0.01,
       Messages = "Wrong"
@@ -49,7 +49,7 @@ test_that("testing summing ms1 spectra", {
   ### Running Function ###
 
   summedSpec <- sum_ms1_spectra(
-    mzMLPath = system.file("testdata", "20220228_VU_pancreas_40um_IMAGE-16078AVG.mzML", package = "ProteoMatch"),
+    mzMLPath = system.file("testdata", "20220228_VU_pancreas_40um_IMAGE-16078AVG.mzML", package = "IsoMatchMS"),
     PPM_Round = 5,
     MinimumAbundance = 0.01,
     Messages = TRUE

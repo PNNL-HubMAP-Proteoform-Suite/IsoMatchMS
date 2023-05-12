@@ -14,13 +14,13 @@ test_that("testing pulling of modification data from mzid", {
   ### Testing inputs ###
 
   expect_error(
-    pull_modifications_from_mzid("/This/Doesnt/Exist.mzID"),
-    "ID file path must exist."
+    pull_modifications_from_mzid("/This/Doesnt/Exist"),
+    "ID file must be an mzid file."
   )
 
   expect_error(
-    pull_modifications_from_mzid("./DESCRIPTION"),
-    "ID file must be an mzid file."
+    pull_modifications_from_mzid("/This/Doesnt/Exist.mzid"),
+    "ID file path must exist."
   )
 
   ### Running Function ###
@@ -28,4 +28,5 @@ test_that("testing pulling of modification data from mzid", {
   #testing BottomUp example
   BotMods <- pull_modifications_from_mzid(file.path(tmpdir, "BottomUp.mzid"))
   expect_true("Proteoform" %in% colnames(BotMods))
+  
 })
