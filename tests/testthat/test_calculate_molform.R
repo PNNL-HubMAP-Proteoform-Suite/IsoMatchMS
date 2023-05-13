@@ -1,4 +1,4 @@
-context(test: calculate_molform)
+context("test: calculate_molform")
 
 test_that("testing molform calculation", {
 

@@ -1,4 +1,4 @@
-context(test: sum_ms1_spectra)
+context("test: sum_ms1_spectra")
 
 test_that("testing summing ms1 spectra", {
 

@@ -1,4 +1,4 @@
-context(test: plot_Ms1Match)
+context("test: plot_Ms1Match")
 
 test_that("testing plotting of IsoMatchMS_MatchedPeaks object", {
 

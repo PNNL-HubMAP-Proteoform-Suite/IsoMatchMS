@@ -1,4 +1,4 @@
-context(test: create_proforma)
+context("test: create_proforma")
 
 test_that("testing proforma string creation", {
 

@@ -1,4 +1,4 @@
-context(test: match_biomolecule_to_ms1)
+context("test: match_biomolecule_to_ms1")
 
 test_that("testing ms1 matching", {
 

@@ -1,4 +1,4 @@
-context(test: filter_peak)
+context("test: filter_peak")
 
 test_that("testing peak filtering", {
 

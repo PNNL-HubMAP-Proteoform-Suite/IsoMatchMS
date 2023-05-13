@@ -1,4 +1,4 @@
-context(test: pull_modifications_from_mzid)
+context("test: pull_modifications_from_mzid")
 
 test_that("testing pulling of modification data from mzid", {
 

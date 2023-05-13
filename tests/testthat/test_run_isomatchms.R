@@ -1,4 +1,4 @@
-context(test: run_isomatchms)
+context("test: run_isomatchms")
 
 test_that("testing proteomatch wrapper function", {
 
