@@ -1,4 +1,4 @@
-context(test: create_proforma)
+context("test: create_proforma")
 
 test_that("testing proforma string creation", {
 
@@ -98,12 +98,34 @@ test_that("testing proforma string creation", {
     "Sequence and Protein should be the same length."
   )
 
+  expect_error(
+    create_proforma(
+      Sequence = c("(49)M(37)SGRGKQG", "SG(67)RGKQGGKARAKAKSRSSRAG", "TEST"),
+      Modifications = c("N-acetyl-L-methionine (49), O-phospho-L-serine (37)", "omega-N,omega-N'-dimethyl-L-arginine (67)", ""),
+      Tool = "ProSight",
+      ConversionList = list("N-acetyl-L-methionine" = "Acetyl")
+    ),
+    "ConversionList does not have a modification for O-phospho-L-serine"
+  )
+
+  expect_message(
+    create_proforma(
+      Sequence = c("GRGKTGGKARAKAKSRSSRAGLQFPVGRVHRL", "KKTRIIPRHLQLAIRNDEELNKLLGGVTIAY", "TEST"),
+      Modifications = c("Methyl 8,Phospho 12,Phospho 22,DiMethyl 30", "TriMethyl 6,Phospho 15", ""),
+      Tool = "MSPathFinder",
+      ConversionList = list("N-acetyl-L-methionine" = "Acetyl", "O-phospho-L-serine" = "Phospho",
+                            "omega-N,omega-N'-dimethyl-L-arginine" = "DiMethyl")
+    ),
+    "ConversionList is only used with ProSight datasets."
+  )
+  
+  
   ### Running Function ###
 
   # MSPathFinder example with scan and protein
   MSPathTest <- create_proforma(
     Sequence = c("GRGKTGGKARAKAKSRSSRAGLQFPVGRVHRL", "KKTRIIPRHLQLAIRNDEELNKLLGGVTIAY", "TEST"),
-    Modifications = c("Methyl 8,Phospho 12,Phospho 22,DiMethyl 30", "TriMethyl 6,Phospho 15", ""),
+    Modifications = c("Methyl 0,Phospho 12,Phospho 22,DiMethyl 30", "TriMethyl 6,Phospho 15", ""),
     Tool = "MSPathFinder",
     Scan = c(3334, 3336, 3338),
     Protein = c("Protein33", "Protein45", "Protein47")

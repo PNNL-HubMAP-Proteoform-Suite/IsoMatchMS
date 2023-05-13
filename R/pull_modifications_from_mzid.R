@@ -36,14 +36,15 @@ pull_modifications_from_mzid <- function(IDPath) {
   ## CHECK INPUT ##
   #################
 
-  # Assert that the ID path exists
-  if (file.exists(IDPath) == FALSE) {
-    stop("ID file path must exist.")
-  }
-
   # Assert that the ID file is an mzid file
   if (grepl(".mzid|.mzID", IDPath) == FALSE) {
     stop("ID file must be an mzid file.")
+  }
+  
+  
+  # Assert that the ID path exists
+  if (file.exists(IDPath) == FALSE) {
+    stop("ID file path must exist.")
   }
 
   ######################

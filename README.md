@@ -25,3 +25,7 @@ If some panels do not load through github.io, try git cloning the example repo, 
 Here is the command to copy the example repo: 
 
 `git clone https://github.com/PNNL-HubMAP-Proteoform-Suite/IsoMatchMS_Trelliscope_Examples.git`
+
+## Test function coverage
+
+85.6%

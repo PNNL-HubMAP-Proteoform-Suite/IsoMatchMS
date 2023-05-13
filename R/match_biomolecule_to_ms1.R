@@ -133,10 +133,15 @@ match_biomolecule_to_ms1 <- function(PeakData,
   PPMThreshold <- abs(PPMThreshold)
 
   # Check that minimum isotope is a numeric
-  if (!is.numeric(IsotopeMinimum) && IsotopeMinimum != 0) {
+  if (!is.numeric(IsotopeMinimum) || IsotopeMinimum == 0) {
     stop("IsotopeRange must be a non-zero numeric value.")
   }
   IsotopeRange <- abs(round(IsotopeMinimum))
+  
+  # Check isotope algorithm
+  if (IsotopeAlgorithm %in% c("Rdisop", "isopat") == FALSE) {
+    stop("IsotopeAlgorithm must either be 'isopat' or 'Rdisop'.")
+  }
   
   ##################
   ## RUN ITERATOR ##

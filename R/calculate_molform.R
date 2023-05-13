@@ -107,7 +107,7 @@ calculate_molform <- function(Biomolecules,
 
   # Check that BioType is "Molecular Formula" or "ProForma"
   if (length(BioType) != 1 | !is.character(BioType) || (BioType != "ProForma" & BioType != "Molecular Formula")) {
-    stop("BioType can either be 'ProForma' or 'Molecular Formula'")
+    stop("BioType can either be 'ProForma' or 'Molecular Formula'.")
   }
 
   # If Identifiers is not NULL...
@@ -140,17 +140,18 @@ calculate_molform <- function(Biomolecules,
 
   # AdductMasses must be a single numeric
   if (length(AdductMasses) < 1 | length(AdductMasses) > 5) {
-    stop("AdductMasses must be a list of length 1 to 5")
+    stop("AdductMasses must be a list of length 1 to 5.")
   }
 
   # AdductMasses must be must contain numerics
   for (x in AdductMasses) {
     if(!is.numeric(x)){
-      stop("Values in AdductMasses list must be numeric")
+      stop("Values in AdductMasses list must be numeric.")
     }
   }
 
-  if (is.null(AdductMasses["proton"]) & is.null(AdductMasses["Proton"])) {
+  # It's weird if proton isn't included, so let the user know 
+  if (any(c("Proton", "proton") %in% names(AdductMasses)) == FALSE) {
     warning("AdductMasses does not contain a mass for a proton. Proceeding with inputted masses.")
   }
 
@@ -244,9 +245,9 @@ calculate_molform <- function(Biomolecules,
       if (length(Modifications) > 0) {
 
         for (PTM in Modifications) {
-
+          
           # Extract formula
-          premolform <- Glossary[Glossary$Modification == PTM, c(4:ncol(Glossary))] %>%
+          premolform <- Glossary[Glossary$Modification == PTM, 4:ncol(Glossary)] %>%
             dplyr::select(colnames(.)[!is.na(.)]) %>%
             paste0(colnames(.), ., collapse = "")
 

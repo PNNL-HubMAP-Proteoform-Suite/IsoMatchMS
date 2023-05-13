@@ -62,7 +62,7 @@ plot_Ms1Match <- function(PeakData,
 
   # Ms1Match should be a IsoMatchMS_MatchedPeaks object
   if ("IsoMatchMS_MatchedPeaks" %in% class(Ms1Match) == FALSE) {
-    stop("Ms1Match must be a IsoMatchMS1_MatchedPeaks object from match_biomolecule_to_ms1")
+    stop("Ms1Match must be a IsoMatchMS_MatchedPeaks object from match_biomolecule_to_ms1")
   }
 
   # ID should be length one

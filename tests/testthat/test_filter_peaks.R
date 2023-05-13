@@ -1,11 +1,11 @@
-context(test: filter_peak)
+context("test: filter_peak")
 
 test_that("testing peak filtering", {
 
   ### Download required test tiles ###
 
-  PepPeakData <- readRDS(system.file("testdata", "Peptides_PeakData.RDS", package = "ProteoMatch"))
-  InPeakData <- readRDS(system.file("testdata", "Intact_PeakData.RDS", package = "ProteoMatch"))
+  PepPeakData <- readRDS(system.file("testdata", "Peptides_PeakData.RDS", package = "IsoMatchMS"))
+  InPeakData <- readRDS(system.file("testdata", "Intact_PeakData.RDS", package = "IsoMatchMS"))
 
   ### Testing inputs ###
 
@@ -18,6 +18,16 @@ test_that("testing peak filtering", {
     "PeakData should be a peak_data object from the pspecterlib get_peak_data or make_peak_data functions."
   )
 
+  expect_message(
+    filter_peaks(
+      PeakData = PepPeakData,
+      MZRange = c(500, 1550, 1200),
+      NoiseFilter = 2
+    ),
+    "More than 2 values found in MZRange. Only the min and max will be used."
+  )
+  
+  
   expect_error(
     filter_peaks(
       PeakData = PepPeakData,
