@@ -11,7 +11,7 @@ This package includes support for:
 
 * Adducts of different masses 
 
-![Logo](./inst/references/Logo.png)
+<img src="./inst/references/Logo.png" height="470" width="470">
 
 ## To install 
 `devtools::install_github("PNNL-HubMAP-Proteoform-Suite/IsoMatchMS")`
