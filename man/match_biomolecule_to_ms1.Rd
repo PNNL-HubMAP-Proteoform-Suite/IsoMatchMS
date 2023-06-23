@@ -10,7 +10,8 @@ match_biomolecule_to_ms1(
   AbundanceThreshold = 50,
   PPMThreshold = 10,
   IsotopeMinimum = 3,
-  IsotopeAlgorithm = "Rdisop"
+  IsotopeAlgorithm = "Rdisop",
+  IncludeAll = FALSE
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ that peak a true match if it ranges between 1.5 - 4.5. Default is 50.}
 while "Rdisop" uses the Rdisop package. Though more accurate, Rdisop has been known
 to crash on Windows computers when called iteratively more than 1000 times.
 Default is Rdisop, though isopat is an alternative.}
+
+\item{IncludeAll}{(logical) Return non-matches along with matches. Default is FALSE.}
 }
 \value{
 (IsoMatchMS_MatchedPeaks object) A IsoMatchMS_MatchedPeaks object, which is a data.table containing the
@@ -49,31 +52,43 @@ plotting functions.
 \details{
 The data.table outputted by this function contains 12 columns
 \tabular{ll}{
-Identifier \tab The provided biomolecule identifier \cr
+Identifiers \tab The provided biomolecule identifier \cr
 \tab \cr
-Adduct \tab The provided adduct \cr
+Adduct Mass \tab The provided adduct masses \cr
+\tab \cr
+Adduct Names \tab The provided adduct names \cr
 \tab \cr
 M/Z \tab The calculated M/Z of a particular isotope \cr
 \tab \cr
-Intensity \tab The calculated relative intensity of a particular isotope \cr
+Mass Shift \tab The mass shifts summed in the ProForma string \cr
+\tab \cr
+Monoisotopic Mass \tab The monoisotopic mass for the isotope profile \cr
+\tab \car
+Abundance \tab The measured abundance value \cr
 \tab \cr
 Isotope \tab The isotope number "n" in M+n \cr
 \tab \cr
 M/Z Search Window \tab Given the ppm, the M/Z Search Window is the window in which peaks are searched and matched \cr
 \tab \cr
-M/Z Experimental \tab The M/Z of the matched from the experimental peaks \cr
+M/Z Experimental \tab The M/Z of the experimental peaks \cr
 \tab \cr
-Intensity Experimental \tab The intensity of the matched peak from the experimental peaks \cr
+Intensity Experimental \tab The intensity of the experimental peak \cr
+\tab \cr
+Abundance Experimental \tab The abundance of the experimental peak
 \tab \cr
 PPM Error \tab How far off the calculated peak is from the experimental peak. Only peaks within the ppm threshold are kept \cr
 \tab \cr
 Absolute Relative Error \tab The sum of the absolute relative difference of calculated and experimental peak intensities. \cr
 \tab \cr
-Correlation \tab The cosine correlation of calculated and experimental peak intensities \cr
+Pearson Correlation \tab The pearson correlation of calculated and experimental peak intensities \cr
 \tab \cr
 Charge \tab The provided charges \cr
 \tab \cr
-Biomolecule \tab The provided biomolecule \cr
+Biomolecules \tab The provided biomolecule \cr
+\tab \cr
+Molecular Formula \tab The calculated molecular formula \cr
+\tab \cr
+Most Abundant Isotope \tab The most abundant isotope, if calculated in calculate_molform \cr
 \tab \cr
 ID \tab A unique ID for each Proteoform, Protein, and Charge combination used in plotting functions \cr
 \tab \cr
