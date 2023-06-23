@@ -96,32 +96,43 @@ plot_Ms1Match <- function(PeakData,
   # Adjust PeakData to be within range, rename intensity to abundance
   AdjPeakData <- PeakData %>%
     dplyr::filter(`M/Z` >= min(Ms1MatchSub$`M/Z`) - Window & `M/Z` <= max(Ms1MatchSub$`M/Z`) + Window)
-
-
+  
   ###############
   ## MAKE PLOT ##
   ###############
+  
+  # Show only the isotope distribution if no peaks are there
+  if (nrow(AdjPeakData) == 0) {
+    
+    plot <- ggplot2::ggplot() +
+      ggplot2::geom_point(data = Ms1MatchSub, ggplot2::aes(x = `M/Z`, y = Abundance), color = "orange", size = 3) +
+      ggplot2::theme_bw() + 
+      ggplot2::geom_vline(xintercept = Ms1MatchSub$`Monoisotopic Mass`[1], linetype = "dotted", color = "steelblue", size = 1.5)
+    
+  } else {
 
-  # Calculate a scaled abundance
-  Scale <- Ms1MatchSub[Ms1MatchSub$Abundance == max(Ms1MatchSub$Abundance), "Abundance Experimental"] / max(Ms1MatchSub$Abundance)
-  Ms1MatchSub$`Abundance Scaled` <- round(Ms1MatchSub$Abundance * Scale, 4)
-  Ms1MatchSub$Matched <- factor(ifelse(!is.na(Ms1MatchSub$`M/Z Experimental`), "Yes", "No"), levels = c("Yes", "No"))
-
-  # Zero fill MS1 match
-  MS1 <- data.table::data.table(
-    `M/Z` = c(AdjPeakData$`M/Z` - 1e-9, AdjPeakData$`M/Z`, AdjPeakData$`M/Z` + 1e-9),
-    Abundance = c(rep(0, nrow(AdjPeakData)), AdjPeakData$Abundance, rep(0, nrow(AdjPeakData)))
-  ) %>%
-    dplyr::arrange(`M/Z`)
-
-  # Generate the plot
-  plot <- ggplot2::ggplot() +
-    ggplot2::geom_line(data = MS1, ggplot2::aes(x = `M/Z`, y = Abundance), color = "black", alpha = 0.25) +
-    ggplot2::ylim(c(0, max(MS1$Abundance + 1))) +
-    ggplot2::geom_point(data = Ms1MatchSub, ggplot2::aes(x = `M/Z`, y = `Abundance Scaled`, color = Matched), size = 3) +
-    ggplot2::scale_color_manual(values = c("purple", "orange")) +
-    ggplot2::theme_bw() + 
-    ggplot2::geom_vline(xintercept = Ms1MatchSub$`Monoisotopic Mass`[1], linetype = "dotted", color = "steelblue", size = 1.5)
+    # Calculate a scaled abundance
+    Scale <- Ms1MatchSub[Ms1MatchSub$Abundance == max(Ms1MatchSub$Abundance), "Abundance Experimental"] / max(Ms1MatchSub$Abundance)
+    Ms1MatchSub$`Abundance Scaled` <- round(Ms1MatchSub$Abundance * Scale, 4)
+    Ms1MatchSub$Matched <- factor(ifelse(!is.na(Ms1MatchSub$`M/Z Experimental`), "Yes", "No"), levels = c("Yes", "No"))
+  
+    # Zero fill MS1 match
+    MS1 <- data.table::data.table(
+      `M/Z` = c(AdjPeakData$`M/Z` - 1e-9, AdjPeakData$`M/Z`, AdjPeakData$`M/Z` + 1e-9),
+      Abundance = c(rep(0, nrow(AdjPeakData)), AdjPeakData$Abundance, rep(0, nrow(AdjPeakData)))
+    ) %>%
+      dplyr::arrange(`M/Z`)
+  
+    # Generate the plot
+    plot <- ggplot2::ggplot() +
+      ggplot2::geom_line(data = MS1, ggplot2::aes(x = `M/Z`, y = Abundance), color = "black", alpha = 0.25) +
+      ggplot2::ylim(c(0, max(MS1$Abundance + 1))) +
+      ggplot2::geom_point(data = Ms1MatchSub, ggplot2::aes(x = `M/Z`, y = `Abundance Scaled`, color = Matched), size = 3) +
+      ggplot2::scale_color_manual(values = c("purple", "orange")) +
+      ggplot2::theme_bw() + 
+      ggplot2::geom_vline(xintercept = Ms1MatchSub$`Monoisotopic Mass`[1], linetype = "dotted", color = "steelblue", size = 1.5)
+    
+  }
 
   return(plot %>% plotly::ggplotly())
 

@@ -281,31 +281,31 @@ match_biomolecule_to_ms1 <- function(PeakData,
   }
 
   # Implement parallel computing for speed
-  #doParallel::registerDoParallel(parallel::detectCores())
-  #
-  ## Iterate through and match molecular formula data. Remove NULLs and pull out the ID
-  #MolFormTable <- foreach(it = 1:nrow(MolecularFormulas), .combine = rbind) %dopar% {
-  #  .match_proteoform_to_ms1_iterator(
-  #    MonoMass = MolecularFormulas$`Monoisotopic Mass`[it],
-  #    MolForm = MolecularFormulas$`Molecular Formula`[it],
-  #    Charge = MolecularFormulas$Charge[it],
-  #    MassShift = MolecularFormulas$`Mass Shift`[it],
-  #    AdductMass = MolecularFormulas$`Adduct Mass`[it]
-  #  )
-  #}
+  doParallel::registerDoParallel(parallel::detectCores())
+  
+  # Iterate through and match molecular formula data. Remove NULLs and pull out the ID
+  MolFormTable <- foreach(it = 1:nrow(MolecularFormulas), .combine = rbind) %dopar% {
+    .match_proteoform_to_ms1_iterator(
+      MonoMass = MolecularFormulas$`Monoisotopic Mass`[it],
+      MolForm = MolecularFormulas$`Molecular Formula`[it],
+      Charge = MolecularFormulas$Charge[it],
+      MassShift = MolecularFormulas$`Mass Shift`[it],
+      AdductMass = MolecularFormulas$`Adduct Mass`[it]
+    )
+  }
   
   # Saving this chunk for debugging
   
-  MolFormTable <- do.call(rbind, lapply(1:nrow(MolecularFormulas), function(it) {
-    message(it)
-    .match_proteoform_to_ms1_iterator(
-        MonoMass = MolecularFormulas$`Monoisotopic Mass`[it],
-        MolForm = MolecularFormulas$`Molecular Formula`[it],
-        Charge = MolecularFormulas$Charge[it],
-        MassShift = MolecularFormulas$`Mass Shift`[it],
-        AdductMass = MolecularFormulas$`Adduct Mass`[it]
-    )
-  }))
+  #MolFormTable <- do.call(rbind, lapply(1:nrow(MolecularFormulas), function(it) {
+  #  message(it)
+  #  .match_proteoform_to_ms1_iterator(
+  #      MonoMass = MolecularFormulas$`Monoisotopic Mass`[it],
+  #      MolForm = MolecularFormulas$`Molecular Formula`[it],
+  #      Charge = MolecularFormulas$Charge[it],
+  #      MassShift = MolecularFormulas$`Mass Shift`[it],
+  #      AdductMass = MolecularFormulas$`Adduct Mass`[it]
+  #  )
+  #}))
 
   # If there is no MolFormTable, stop
   if (is.null(MolFormTable) || nrow(MolFormTable) == 0) {
@@ -316,8 +316,9 @@ match_biomolecule_to_ms1 <- function(PeakData,
   AllMatches <- merge(MolFormTable, 
                       MolecularFormulas, 
                       by = c("Monoisotopic Mass", "Mass Shift", "Molecular Formula", "Charge", "Adduct Mass"), 
-                      all.x = T) %>%
-    dplyr::mutate(ID = as.numeric(as.factor(ID)))
+                      all.x = T)
+  
+  browser()
   
   # Arrange by pearson correlation and renumber IDs
   AllMatches <- AllMatches %>%
@@ -329,10 +330,12 @@ match_biomolecule_to_ms1 <- function(PeakData,
       `Molecular Formula`, `Most Abundant Isotope`, ID
      ) %>%
     unique() %>%
-    dplyr::arrange(-`Pearson Correlation`) %>%
-    dplyr::mutate(
-      ID = as.numeric(factor(as.character(ID), levels = unique(as.character(ID))))
-    )
+    dplyr::arrange(-`Pearson Correlation`) 
+  
+  #%>%
+  #  dplyr::mutate(
+  #    ID = as.numeric(factor(as.character(ID), levels = unique(as.character(ID))))
+  #  )
 
   # If no matches, return NULL
   if (is.null(AllMatches) & !IncludeAll) {

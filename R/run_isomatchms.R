@@ -281,7 +281,7 @@ run_isomatchms <- function(Biomolecules,
     PeakData = FilteredData,
     Ms1Match = MatchedPeaks,
     Path = file.path(Path, "Trelliscope"),
-    MinCorrelationScore = Settings[Settings$Parameter == "CorrelationMinimum", "Default"] %>% as.numeric(),
+    MinCorrelationScore = ifelse(IncludeAll, NA, Settings[Settings$Parameter == "CorrelationMinimum", "Default"] %>% as.numeric()), 
     Window = Settings[Settings$Parameter == "PlottingWindow", "Default"] %>% as.numeric()
   )
 
