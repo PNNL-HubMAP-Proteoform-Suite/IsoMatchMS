@@ -4,7 +4,7 @@
 #'     plotted over the experimental spectrum.
 #'
 #' @param PeakData (peak_data object) A pspecterlib peak_data object or data.table with "M/Z" and "Intensity". Required.
-#' @param Ms1Match (IsoMatchMS1_MatchedPeaks) A IsoMatchMS1_MatchedPeaks object from match_biomolecule_to_ms1. Required.
+#' @param Ms1Match (IsoMatchMS_MatchedPeaks) An IsoMatchMS_MatchedPeaks object from match_biomolecule_to_ms1. Required.
 #' @param ID (numeric) The ID in the IsoMatchMS_MatchedPeaks object to plot. Required.
 #' @param Window (numeric) The -/+ m/z value on either side of the matched spectra plot. Default is 5 m/z.
 #'
@@ -111,11 +111,20 @@ plot_Ms1Match <- function(PeakData,
     
   } else {
 
-    # Calculate a scaled abundance
-    Scale <- Ms1MatchSub[Ms1MatchSub$Abundance == max(Ms1MatchSub$Abundance), "Abundance Experimental"] / max(Ms1MatchSub$Abundance)
+    # Identify the highest matched peak 
+    MaxPos <- which.max(Ms1MatchSub$`Abundance Experimental`)
+    
+    # Determine scaling factor. If no matched abundances, scale to largest peak.  
+    if (length(MaxPos) == 0) {
+      Scale <- max(AdjPeakData$Abundance) / 100
+    } else {
+      Scale <- Ms1MatchSub$`Abundance Experimental`[MaxPos] / Ms1MatchSub$Abundance[MaxPos]
+    }
+    
+    # Scale the abundance
     Ms1MatchSub$`Abundance Scaled` <- round(Ms1MatchSub$Abundance * Scale, 4)
     Ms1MatchSub$Matched <- factor(ifelse(!is.na(Ms1MatchSub$`M/Z Experimental`), "Yes", "No"), levels = c("Yes", "No"))
-  
+    
     # Zero fill MS1 match
     MS1 <- data.table::data.table(
       `M/Z` = c(AdjPeakData$`M/Z` - 1e-9, AdjPeakData$`M/Z`, AdjPeakData$`M/Z` + 1e-9),
@@ -128,7 +137,7 @@ plot_Ms1Match <- function(PeakData,
       ggplot2::geom_line(data = MS1, ggplot2::aes(x = `M/Z`, y = Abundance), color = "black", alpha = 0.25) +
       ggplot2::ylim(c(0, max(MS1$Abundance + 1))) +
       ggplot2::geom_point(data = Ms1MatchSub, ggplot2::aes(x = `M/Z`, y = `Abundance Scaled`, color = Matched), size = 3) +
-      ggplot2::scale_color_manual(values = c("purple", "orange")) +
+      ggplot2::scale_color_manual(values = c("Yes" = "purple", "No" = "orange")) +
       ggplot2::theme_bw() + 
       ggplot2::geom_vline(xintercept = Ms1MatchSub$`Monoisotopic Mass`[1], linetype = "dotted", color = "steelblue", size = 1.5)
     
