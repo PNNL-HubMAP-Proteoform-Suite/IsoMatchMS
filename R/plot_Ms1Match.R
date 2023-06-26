@@ -132,10 +132,11 @@ plot_Ms1Match <- function(PeakData,
     ) %>%
       dplyr::arrange(`M/Z`)
   
+    browser()
+    
     # Generate the plot
     plot <- ggplot2::ggplot() +
       ggplot2::geom_line(data = MS1, ggplot2::aes(x = `M/Z`, y = Abundance), color = "black", alpha = 0.25) +
-      ggplot2::ylim(c(0, max(MS1$Abundance + 1))) +
       ggplot2::geom_point(data = Ms1MatchSub, ggplot2::aes(x = `M/Z`, y = `Abundance Scaled`, color = Matched), size = 3) +
       ggplot2::scale_color_manual(values = c("Yes" = "purple", "No" = "orange")) +
       ggplot2::theme_bw() + 
