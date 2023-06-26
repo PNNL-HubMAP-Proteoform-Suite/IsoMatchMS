@@ -155,6 +155,7 @@ match_biomolecule_to_ms1 <- function(PeakData,
   ##################
 
   .match_proteoform_to_ms1_iterator <- function(MonoMass,
+                                                Biomolecule,
                                                 MolForm,
                                                 Charge,
                                                 MassShift,
@@ -270,6 +271,7 @@ match_biomolecule_to_ms1 <- function(PeakData,
 
     # Add input columns
     IsoDist$`Monoisotopic Mass` <- MonoMass
+    IsoDist$Biomolecules <- Biomolecule
     IsoDist$`Molecular Formula` <- MolForm
     IsoDist$Charge <- Charge
     IsoDist$`Mass Shift` <- MassShift
@@ -287,6 +289,7 @@ match_biomolecule_to_ms1 <- function(PeakData,
   MolFormTable <- foreach(it = 1:nrow(MolecularFormulas), .combine = rbind) %dopar% {
     .match_proteoform_to_ms1_iterator(
       MonoMass = MolecularFormulas$`Monoisotopic Mass`[it],
+      Biomolecule = MolecularFormulas$Biomolecules[it],
       MolForm = MolecularFormulas$`Molecular Formula`[it],
       Charge = MolecularFormulas$Charge[it],
       MassShift = MolecularFormulas$`Mass Shift`[it],
@@ -315,7 +318,7 @@ match_biomolecule_to_ms1 <- function(PeakData,
   # Subset matches
   AllMatches <- merge(MolFormTable, 
                       MolecularFormulas, 
-                      by = c("Monoisotopic Mass", "Mass Shift", "Molecular Formula", "Charge", "Adduct Mass"), 
+                      by = c("Monoisotopic Mass", "Mass Shift", "Molecular Formula", "Charge", "Adduct Mass", "Biomolecules"), 
                       all.x = T)
   
   # Arrange by pearson correlation and renumber IDs
