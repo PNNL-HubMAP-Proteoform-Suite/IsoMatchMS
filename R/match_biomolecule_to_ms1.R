@@ -154,13 +154,19 @@ match_biomolecule_to_ms1 <- function(PeakData,
   ## RUN ITERATOR ##
   ##################
 
-  .match_proteoform_to_ms1_iterator <- function(MonoMass,
-                                                Biomolecule,
-                                                MolForm,
-                                                Charge,
-                                                MassShift,
-                                                AdductMass) {
+  .match_proteoform_to_ms1_iterator <- function(Iteration) {
 
+    ##############################
+    ## PULL NECESSARY VARIABLES ##
+    ##############################
+    
+    MonoMass <- MolecularFormulas$`Monoisotopic Mass`[Iteration]
+    MolForm <- MolecularFormulas$`Molecular Formula`[Iteration]
+    MassShift <- MolecularFormulas$`Mass Shift`[Iteration]
+    Charge <- MolecularFormulas$Charge[Iteration]
+    AdductMass <- MolecularFormulas$`Adduct Mass`[Iteration]
+    MassShift <- MolecularFormulas$`Mass Shift`[Iteration]
+    
     ########################
     ## CALCULATE ISOTOPES ##
     ########################
@@ -264,18 +270,13 @@ match_biomolecule_to_ms1 <- function(PeakData,
 
     # Calculate Absolute Relative Error and Pearson Correlation
     IsoDist$`Absolute Relative Error` <- round(1/nrow(AbundanceDF) * sum(abs(AbundanceDF$Abundance - AbundanceDF$`Abundance Experimental`) / AbundanceDF$Abundance), 8)
-    IsoDist$`Pearson Correlation` <- round(stats::cor(AbundanceDF$`Abundance Experimental`, AbundanceDF$Abundance, method = "pearson"), 8)
+    IsoDist$`Pearson Correlation` <- suppressWarnings(round(stats::cor(AbundanceDF$`Abundance Experimental`, AbundanceDF$Abundance, method = "pearson"), 8))
 
     # Generate an identifier
     IsoDist$ID <- uuid::UUIDgenerate()
 
     # Add input columns
-    IsoDist$`Monoisotopic Mass` <- MonoMass
-    IsoDist$Biomolecules <- Biomolecule
-    IsoDist$`Molecular Formula` <- MolForm
-    IsoDist$Charge <- Charge
-    IsoDist$`Mass Shift` <- MassShift
-    IsoDist$`Adduct Mass` <- AdductMass
+    IsoDist <- cbind(IsoDist, MolecularFormulas[Iteration,])
 
     # Add missing columns and reorder
     return(IsoDist)
@@ -287,42 +288,22 @@ match_biomolecule_to_ms1 <- function(PeakData,
   
   # Iterate through and match molecular formula data. Remove NULLs and pull out the ID
   MolFormTable <- foreach(it = 1:nrow(MolecularFormulas), .combine = rbind) %dopar% {
-    .match_proteoform_to_ms1_iterator(
-      MonoMass = MolecularFormulas$`Monoisotopic Mass`[it],
-      Biomolecule = MolecularFormulas$Biomolecules[it],
-      MolForm = MolecularFormulas$`Molecular Formula`[it],
-      Charge = MolecularFormulas$Charge[it],
-      MassShift = MolecularFormulas$`Mass Shift`[it],
-      AdductMass = MolecularFormulas$`Adduct Mass`[it]
-    )
+    .match_proteoform_to_ms1_iterator(it)
   }
   
-  # Saving this chunk for debugging
-  
+  ## Saving this chunk for debugging
   #MolFormTable <- do.call(rbind, lapply(1:nrow(MolecularFormulas), function(it) {
   #  message(it)
-  #  .match_proteoform_to_ms1_iterator(
-  #      MonoMass = MolecularFormulas$`Monoisotopic Mass`[it],
-  #      MolForm = MolecularFormulas$`Molecular Formula`[it],
-  #      Charge = MolecularFormulas$Charge[it],
-  #      MassShift = MolecularFormulas$`Mass Shift`[it],
-  #      AdductMass = MolecularFormulas$`Adduct Mass`[it]
-  #  )
+  #  .match_proteoform_to_ms1_iterator(it)
   #}))
 
   # If there is no MolFormTable, stop
   if (is.null(MolFormTable) || nrow(MolFormTable) == 0) {
     stop("No fragmentation patterns found. Try increasing the PPMThreshold, decreasing the minimum isotope range, lowering the noise filter, or lowering the minimum abundance.")
   }
-
-  # Subset matches
-  AllMatches <- merge(MolFormTable, 
-                      MolecularFormulas, 
-                      by = c("Monoisotopic Mass", "Mass Shift", "Molecular Formula", "Charge", "Adduct Mass", "Biomolecules"), 
-                      all.x = T)
   
   # Arrange by pearson correlation and renumber IDs
-  AllMatches <- AllMatches %>%
+  AllMatches <- MolFormTable %>%
     dplyr::select(
       Identifiers, `Adduct Mass`, `Adduct Name`, `M/Z`, `Mass Shift`, `Monoisotopic Mass`, 
       Abundance, Isotope, `M/Z Search Window`, `M/Z Experimental`,
