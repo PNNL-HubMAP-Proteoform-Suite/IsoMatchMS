@@ -318,8 +318,6 @@ match_biomolecule_to_ms1 <- function(PeakData,
                       by = c("Monoisotopic Mass", "Mass Shift", "Molecular Formula", "Charge", "Adduct Mass"), 
                       all.x = T)
   
-  browser()
-  
   # Arrange by pearson correlation and renumber IDs
   AllMatches <- AllMatches %>%
     dplyr::select(
@@ -330,12 +328,10 @@ match_biomolecule_to_ms1 <- function(PeakData,
       `Molecular Formula`, `Most Abundant Isotope`, ID
      ) %>%
     unique() %>%
-    dplyr::arrange(-`Pearson Correlation`) 
-  
-  #%>%
-  #  dplyr::mutate(
-  #    ID = as.numeric(factor(as.character(ID), levels = unique(as.character(ID))))
-  #  )
+    dplyr::arrange(-`Pearson Correlation`) %>%
+    dplyr::mutate(
+      ID = as.numeric(factor(as.character(ID), levels = unique(as.character(ID))))
+    )
 
   # If no matches, return NULL
   if (is.null(AllMatches) & !IncludeAll) {
