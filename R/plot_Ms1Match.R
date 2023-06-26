@@ -91,7 +91,12 @@ plot_Ms1Match <- function(PeakData,
 
   # Filter Ms1 Match to the correct subset
   IDSelection <- ID
-  Ms1MatchSub <- Ms1Match %>% dplyr::filter(ID == IDSelection)
+  Ms1MatchSub <- Ms1Match %>% 
+    dplyr::filter(ID == IDSelection) %>%
+    dplyr::mutate(
+      Isotope = paste0("M+", Isotope),
+      Isotope = ifelse(Isotope == "M+0", "M", Isotope)
+    )
 
   # Adjust PeakData to be within range, rename intensity to abundance
   AdjPeakData <- PeakData %>%
@@ -105,7 +110,7 @@ plot_Ms1Match <- function(PeakData,
   if (nrow(AdjPeakData) == 0) {
     
     plot <- ggplot2::ggplot() +
-      ggplot2::geom_point(data = Ms1MatchSub, ggplot2::aes(x = `M/Z`, y = Abundance), color = "orange", size = 3) +
+      ggplot2::geom_point(data = Ms1MatchSub, ggplot2::aes(x = `M/Z`, y = Abundance, label = Isotope), color = "orange", size = 3) +
       ggplot2::theme_bw() + 
       ggplot2::geom_vline(xintercept = Ms1MatchSub$`Monoisotopic Mass`[1], linetype = "dotted", color = "steelblue", size = 1.5)
     
@@ -131,14 +136,13 @@ plot_Ms1Match <- function(PeakData,
       Abundance = c(rep(0, nrow(AdjPeakData)), AdjPeakData$Abundance, rep(0, nrow(AdjPeakData)))
     ) %>%
       dplyr::arrange(`M/Z`)
-  
-    browser()
     
     # Generate the plot
     plot <- ggplot2::ggplot() +
       ggplot2::geom_line(data = MS1, ggplot2::aes(x = `M/Z`, y = Abundance), color = "black", alpha = 0.25) +
-      ggplot2::geom_point(data = Ms1MatchSub, ggplot2::aes(x = `M/Z`, y = `Abundance Scaled`, color = Matched), size = 3) +
+      ggplot2::geom_point(data = Ms1MatchSub, ggplot2::aes(x = `M/Z`, y = `Abundance Scaled`, color = Matched, label = Isotope), size = 3) +
       ggplot2::scale_color_manual(values = c("Yes" = "purple", "No" = "orange")) +
+      ggplot2::xlim(c(min(Ms1MatchSub$`M/Z`) - Window, max(Ms1MatchSub$`M/Z`) + Window)) +
       ggplot2::theme_bw() + 
       ggplot2::geom_vline(xintercept = Ms1MatchSub$`Monoisotopic Mass`[1], linetype = "dotted", color = "steelblue", size = 1.5)
     
