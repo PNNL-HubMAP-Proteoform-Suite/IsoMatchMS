@@ -19,6 +19,7 @@
 #'     while "Rdisop" uses the Rdisop package. Though more accurate, Rdisop has been known 
 #'     to crash on Windows computers when called iteratively more than 1000 times. 
 #'     Default is Rdisop, though isopat is an alternative.
+#' @param IncludeAll (logical) Return non-matches along with matches. Default is FALSE. 
 #'
 #' @details
 #' The data.table outputted by this function contains 12 columns
@@ -104,7 +105,8 @@ match_biomolecule_to_ms1 <- function(PeakData,
                                      AbundanceThreshold = 50,
                                      PPMThreshold = 10,
                                      IsotopeMinimum = 3,
-                                     IsotopeAlgorithm = "Rdisop") {
+                                     IsotopeAlgorithm = "Rdisop",
+                                     IncludeAll = FALSE) {
 
   ##################
   ## CHECK INPUTS ##
@@ -143,23 +145,35 @@ match_biomolecule_to_ms1 <- function(PeakData,
     stop("IsotopeAlgorithm must either be 'isopat' or 'Rdisop'.")
   }
   
+  # IncludeAll must be true or false 
+  if (!is.logical(IncludeAll)) {
+    stop("IncludeAll must be true or false.")
+  }
+  
   ##################
   ## RUN ITERATOR ##
   ##################
 
-  .match_proteoform_to_ms1_iterator <- function(MonoMass,
-                                                MolForm,
-                                                Charge,
-                                                MassShift,
-                                                AdductMass) {
+  .match_proteoform_to_ms1_iterator <- function(Iteration) {
 
+    ##############################
+    ## PULL NECESSARY VARIABLES ##
+    ##############################
+    
+    MonoMass <- MolecularFormulas$`Monoisotopic Mass`[Iteration]
+    MolForm <- MolecularFormulas$`Molecular Formula`[Iteration]
+    MassShift <- MolecularFormulas$`Mass Shift`[Iteration]
+    Charge <- MolecularFormulas$Charge[Iteration]
+    AdductMass <- MolecularFormulas$`Adduct Mass`[Iteration]
+    MassShift <- MolecularFormulas$`Mass Shift`[Iteration]
+    
     ########################
     ## CALCULATE ISOTOPES ##
     ########################
 
     # Make sure that the PeakData overlaps with +10 the monoisotopic mass
     if (nrow(PeakData[PeakData$`M/Z` >= round(MonoMass) & PeakData$`M/Z` <= round(MonoMass)+10,]) == 0) {
-      return(NULL)
+      if (!IncludeAll) {return(NULL)}
     }
     
     # Get isotope profile (distribution). Match quality is determined by the limit function.
@@ -243,7 +257,7 @@ match_biomolecule_to_ms1 <- function(PeakData,
     
     # Make sure we have enough matches 
     if ((IsoDist %>% dplyr::filter(!is.na(`M/Z Experimental`)) %>% nrow()) < IsotopeMinimum) {
-      return(NULL)
+      if (!IncludeAll) {return(NULL) }
     }
         
     ######################
@@ -256,17 +270,13 @@ match_biomolecule_to_ms1 <- function(PeakData,
 
     # Calculate Absolute Relative Error and Pearson Correlation
     IsoDist$`Absolute Relative Error` <- round(1/nrow(AbundanceDF) * sum(abs(AbundanceDF$Abundance - AbundanceDF$`Abundance Experimental`) / AbundanceDF$Abundance), 8)
-    IsoDist$`Pearson Correlation` <- round(stats::cor(AbundanceDF$`Abundance Experimental`, AbundanceDF$Abundance, method = "pearson"), 8)
+    IsoDist$`Pearson Correlation` <- suppressWarnings(round(stats::cor(AbundanceDF$`Abundance Experimental`, AbundanceDF$Abundance, method = "pearson"), 8))
 
     # Generate an identifier
     IsoDist$ID <- uuid::UUIDgenerate()
 
     # Add input columns
-    IsoDist$`Monoisotopic Mass` <- MonoMass
-    IsoDist$`Molecular Formula` <- MolForm
-    IsoDist$Charge <- Charge
-    IsoDist$`Mass Shift` <- MassShift
-    IsoDist$`Adduct Mass` <- AdductMass
+    IsoDist <- cbind(IsoDist, MolecularFormulas[Iteration,])
 
     # Add missing columns and reorder
     return(IsoDist)
@@ -278,41 +288,22 @@ match_biomolecule_to_ms1 <- function(PeakData,
   
   # Iterate through and match molecular formula data. Remove NULLs and pull out the ID
   MolFormTable <- foreach(it = 1:nrow(MolecularFormulas), .combine = rbind) %dopar% {
-    .match_proteoform_to_ms1_iterator(
-      MonoMass = MolecularFormulas$`Monoisotopic Mass`[it],
-      MolForm = MolecularFormulas$`Molecular Formula`[it],
-      Charge = MolecularFormulas$Charge[it],
-      MassShift = MolecularFormulas$`Mass Shift`[it],
-      AdductMass = MolecularFormulas$`Adduct Mass`[it]
-    )
+    .match_proteoform_to_ms1_iterator(it)
   }
   
-  # Saving this chunk for debugging
-  
+  ## Saving this chunk for debugging
   #MolFormTable <- do.call(rbind, lapply(1:nrow(MolecularFormulas), function(it) {
   #  message(it)
-  #  .match_proteoform_to_ms1_iterator(
-  #      MonoMass = MolecularFormulas$`Monoisotopic Mass`[it],
-  #      MolForm = MolecularFormulas$`Molecular Formula`[it],
-  #      Charge = MolecularFormulas$Charge[it],
-  #      MassShift = MolecularFormulas$`Mass Shift`[it],
-  #      AdductMass = MolecularFormulas$Adduct[it]
-  #  )
+  #  .match_proteoform_to_ms1_iterator(it)
   #}))
 
   # If there is no MolFormTable, stop
   if (is.null(MolFormTable) || nrow(MolFormTable) == 0) {
     stop("No fragmentation patterns found. Try increasing the PPMThreshold, decreasing the minimum isotope range, lowering the noise filter, or lowering the minimum abundance.")
   }
-
-  # Subset matches
-  AllMatches <- merge(MolFormTable, 
-                      MolecularFormulas, 
-                      by = c("Monoisotopic Mass", "Mass Shift", "Molecular Formula", "Charge", "Adduct Mass"), 
-                      all.x = T) %>%
-    dplyr::mutate(ID = as.numeric(as.factor(ID)))
-
-  AllMatches <- AllMatches %>%
+  
+  # Arrange by pearson correlation and renumber IDs
+  AllMatches <- MolFormTable %>%
     dplyr::select(
       Identifiers, `Adduct Mass`, `Adduct Name`, `M/Z`, `Mass Shift`, `Monoisotopic Mass`, 
       Abundance, Isotope, `M/Z Search Window`, `M/Z Experimental`,
@@ -320,10 +311,14 @@ match_biomolecule_to_ms1 <- function(PeakData,
       `Absolute Relative Error`, `Pearson Correlation`, Charge, Biomolecules, 
       `Molecular Formula`, `Most Abundant Isotope`, ID
      ) %>%
-    unique()
+    unique() %>%
+    dplyr::arrange(-`Pearson Correlation`) %>%
+    dplyr::mutate(
+      ID = as.numeric(factor(as.character(ID), levels = unique(as.character(ID))))
+    )
 
   # If no matches, return NULL
-  if (is.null(AllMatches)) {
+  if (is.null(AllMatches) & !IncludeAll) {
     message("No matches detected.")
     return(NULL)
   }

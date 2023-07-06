@@ -16,7 +16,9 @@
 #'    Required.
 #' @param Path (character) The base directory of the output trelliscope application. Default is Downloads/Ms1Match.
 #' @param Identifiers (character) A vector of identifiers for each biomolecule (i.e. protein, glycan, etc.). Optional.
-#' @param Messages (boolean) A TRUE/FALSE indicating whether messages should be printed.
+#' @param IncludeAll (logical) Return non-matches along with matches. Default is FALSE. 
+#' @param Messages (logical) A TRUE/FALSE indicating whether messages should be printed. Default is TRUE.
+#' 
 #'
 #' @details Before running the main algorithm, you will need Molecular Formulas (or ProForma strings)
 #' and a summed spectra. There are several ways to get ProForma strings, including
@@ -191,6 +193,7 @@ run_isomatchms <- function(Biomolecules,
                             SettingsFile,
                             Path = file.path(.getDownloadsFolder(), "Ms1Match"),
                             Identifiers = NULL,
+                            IncludeAll = FALSE,
                             Messages = TRUE) {
 
   ##################
@@ -263,7 +266,8 @@ run_isomatchms <- function(Biomolecules,
     AbundanceThreshold = Settings[Settings$Parameter == "AbundanceThreshold", "Default"] %>% as.numeric(),
     PPMThreshold = Settings[Settings$Parameter == "PPMThreshold", "Default"] %>% as.numeric(),
     IsotopeMinimum = Settings[Settings$Parameter == "IsotopeMinimum", "Default"] %>% as.numeric(),
-    IsotopeAlgorithm = Settings[Settings$Parameter == "IsotopingAlgorithm", "Default"]
+    IsotopeAlgorithm = Settings[Settings$Parameter == "IsotopingAlgorithm", "Default"],
+    IncludeAll = IncludeAll
   )
   if (is.null(MatchedPeaks)) {
     write.csv("No matches found", file.path(Path, "Matched_Isotope_Distributions.csv"), row.names = F, quote = F)
@@ -277,7 +281,7 @@ run_isomatchms <- function(Biomolecules,
     PeakData = FilteredData,
     Ms1Match = MatchedPeaks,
     Path = file.path(Path, "Trelliscope"),
-    MinCorrelationScore = Settings[Settings$Parameter == "CorrelationMinimum", "Default"] %>% as.numeric(),
+    MinCorrelationScore = ifelse(IncludeAll, NA, Settings[Settings$Parameter == "CorrelationMinimum", "Default"] %>% as.numeric()), 
     Window = Settings[Settings$Parameter == "PlottingWindow", "Default"] %>% as.numeric()
   )
 

@@ -9,7 +9,7 @@ plot_Ms1Match(PeakData, Ms1Match, ID, Window = 2)
 \arguments{
 \item{PeakData}{(peak_data object) A pspecterlib peak_data object or data.table with "M/Z" and "Intensity". Required.}
 
-\item{Ms1Match}{(IsoMatchMS1_MatchedPeaks) A IsoMatchMS1_MatchedPeaks object from match_biomolecule_to_ms1. Required.}
+\item{Ms1Match}{(IsoMatchMS_MatchedPeaks) An IsoMatchMS_MatchedPeaks object from match_biomolecule_to_ms1. Required.}
 
 \item{ID}{(numeric) The ID in the IsoMatchMS_MatchedPeaks object to plot. Required.}
 

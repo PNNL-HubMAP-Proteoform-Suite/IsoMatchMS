@@ -11,6 +11,7 @@ run_isomatchms(
   SettingsFile,
   Path = file.path(.getDownloadsFolder(), "Ms1Match"),
   Identifiers = NULL,
+  IncludeAll = FALSE,
   Messages = TRUE
 )
 }
@@ -35,7 +36,9 @@ Required.}
 
 \item{Identifiers}{(character) A vector of identifiers for each biomolecule (i.e. protein, glycan, etc.). Optional.}
 
-\item{Messages}{(boolean) A TRUE/FALSE indicating whether messages should be printed.}
+\item{IncludeAll}{(logical) Return non-matches along with matches. Default is FALSE.}
+
+\item{Messages}{(logical) A TRUE/FALSE indicating whether messages should be printed. Default is TRUE.}
 }
 \value{
 \tabular{ll}{

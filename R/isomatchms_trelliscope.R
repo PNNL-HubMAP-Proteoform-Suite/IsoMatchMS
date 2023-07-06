@@ -81,11 +81,13 @@ isomatchms_trelliscope <- function(PeakData,
   }
 
   # Check that minimum correlation score is within 0-1
-  if (!is.numeric(MinCorrelationScore)) {
-    stop("MinCorrelationScore must be a numeric.")
-  }
-  if (MinCorrelationScore < -1 | MinCorrelationScore > 1) {
-    stop("MinCorrelationScore must be between -1 and 1.")
+  if (!is.na(MinCorrelationScore)) {
+    if (!is.numeric(MinCorrelationScore)) {
+      stop("MinCorrelationScore must be a numeric.")
+    }
+    if (MinCorrelationScore < -1 | MinCorrelationScore > 1) {
+      stop("MinCorrelationScore must be between -1 and 1.")
+    } 
   }
 
   # Check the +/- window range
@@ -104,8 +106,10 @@ isomatchms_trelliscope <- function(PeakData,
   IsoMatchMSTrelli <- IsoMatchMSTrelli %>% dplyr::rename(Identifier = Identifiers)
 
   # Filter IsoMatchMS down to the correlation score
-  IsoMatchMSTrelli <- IsoMatchMSTrelli %>%
-    dplyr::filter(`Pearson Correlation` >= MinCorrelationScore)
+  if (!is.na(MinCorrelationScore)) {
+    IsoMatchMSTrelli <- IsoMatchMSTrelli %>%
+      dplyr::filter(`Pearson Correlation` >= MinCorrelationScore) 
+  }
   
   # List relevant IsoMatchMS columns
   RelCol <- c("Biomolecules", "Identifier", "Absolute Relative Error", "Pearson Correlation", "Molecular Formula",
