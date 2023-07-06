@@ -7,7 +7,7 @@ This package includes support for:
 
 * Digested proteomics 
 
-* Lipidomics, Metabolomics, Glycomics (using molecular formula)
+* Glycomics (using molecular formula)
 
 * Adducts of different masses 
 
