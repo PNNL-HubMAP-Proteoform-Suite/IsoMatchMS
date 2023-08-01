@@ -1,0 +1,36 @@
+bibentry(
+  bibtype  = "Article",
+  title    = "IsoMatchMS: Open-Source Software for Automated Annotation and Visualization of High Resolution MALDI-MS Spectra",
+  author   = c(person("David", "Degnan", email = "david.degnan@pnnl.gov"), 
+               person("Kevin", "Zemaitis"),
+               person("Logan", "Lewis"),
+               person("Lee Ann", "McCue"),
+               person("Lisa", "Bramer"),
+               person("James", "Fulcher"),
+               person("Dusan", "Velickovic"),
+               person("Ljiljana", "Pasa-Tolic"),
+               person("Mowei", "Zhou")),
+  journal  = "Journal of the American Society for Mass Spectrometry",
+  year     = "2023",
+  volume   = "",
+  number   = "",
+  pages    = "",
+  doi      = "10.1021/jasms.3c00180"
+)
+bibentry(
+  bibtype  = "Article",
+  title    = "PSpecteR: A User-Friendly and Interactive Application for Visualizing Top-Down and Bottom-Up Proteomics Data in R",
+  author   = c(person("David", "Degnan", email = "david.degnan@pnnl.gov"),
+               person("Lisa", "Bramer"),
+               person("Amanda", "White"),
+               person("Mowei", "Zhou"),
+               person("Aivett", "Bilbao"),
+               person("Lee Ann", "McCue")),
+  journal  = "Journal of Proteome Research",
+  year     = "2021",
+  volume   = "20",
+  number   = "4",
+  pages    = "2014-2020",
+  doi      = "10.1021/acs.jproteome.0c00857"
+)
+
