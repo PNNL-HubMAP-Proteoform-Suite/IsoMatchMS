@@ -17,7 +17,7 @@ This package includes support for:
 
 * Any biomolecules with a known molecular formula (lipids, metabolites, etc.)
 
-\
+
 
 # How it works
 
