@@ -3,7 +3,7 @@
 R package for matching and visualizing isotope profiles with trelliscope displays.
 This package includes support for:
 
-<img src="IsoMatchMS_Logo.png" alt="PSpecteR_Logo" style="width:300px;margin-right: 40px;" align="left"/>
+<img src="IsoMatchMS_Logo.png" alt="PSpecteR_Logo" style="width:275px;margin-right: 40px;" align="left"/>
 
 * Intact proteomics 
 
@@ -16,7 +16,6 @@ This package includes support for:
 * Adducts of different masses
 
 * Any biomolecules with a known molecular formula (lipids, metabolites, etc.)
-
 
 
 # How it works
