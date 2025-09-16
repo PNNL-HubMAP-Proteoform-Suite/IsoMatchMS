@@ -1,5 +1,7 @@
 # IsoMatchMS
 
+Please cite: https://pubs.acs.org/doi/full/10.1021/jasms.3c00180
+
 R package for matching and visualizing isotope profiles with trelliscope displays.
 This package includes support for:
 
